@@ -22,8 +22,6 @@ export default function FiguresPage() {
   const [figures, setFigures] = useState<Figure[]>([])
   const [searchTerm, setSearchTerm] = useState("")
   const [difficultyFilter, setDifficultyFilter] = useState("")
-  //const [showVideo, setShowVideo] = useState(false)
-  //const [previewMode,setPreviewMode]=useState<"none"|"all">("none") //#
   const [openVideos, setOpenVideos] = useState<Set<string>>(new Set())
   useEffect(() => {
 

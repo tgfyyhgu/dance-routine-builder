@@ -25,7 +25,6 @@ type Props = {
   readonly youtube_url?: string;
   readonly start_time?: number | null;
   readonly end_time: number | null;
-  //readonly previewMode?: "none" | "all"
   readonly isOpen: boolean
   readonly toggleVideo: (id:string)=>void
   
@@ -33,10 +32,7 @@ type Props = {
 // This component is responsible for rendering a single figure's information in a table row, along with a button to toggle the video preview. It also handles extracting the YouTube video ID from the provided URL and embedding the video when requested.
 export default function FigureCard(
   { figureId, name, difficulty, note, youtube_url, start_time, end_time, isOpen, toggleVideo }: 
-  Props) {//
-//
-  //const [showVideo, setShowVideo] = useState(false)
-  //const videoVisible = previewMode==="all" || showVideo
+  Props) {
   const videoVisible = isOpen
 
   let videoId: string | null = null;
