@@ -16,20 +16,18 @@ interface Figure {
   dance_style: string
 }
 
-
 export default function FiguresPage() {
   const params = useParams()
   const dance = params.dance as string
   const [figures, setFigures] = useState<Figure[]>([])
   const [searchTerm, setSearchTerm] = useState("")
   const [difficultyFilter, setDifficultyFilter] = useState("")
-  const [showVideo, setShowVideo] = useState(false)
-  const [showAllVideos, setShowAllVideos] = useState(false)
-  const [resetPreviewSignal, setResetPreviewSignal] = useState(0)
+  //const [showVideo, setShowVideo] = useState(false)
+  //const [previewMode,setPreviewMode]=useState<"none"|"all">("none") //#
+  const [openVideos, setOpenVideos] = useState<Set<string>>(new Set())
   useEffect(() => {
 
     async function loadFigures() {
-
       const { data } = await supabase
         .from("figures")
         .select("*")
@@ -38,33 +36,24 @@ export default function FiguresPage() {
       if (data) {
         setFigures(data)
       }
-
     }
-
     loadFigures()
-
   }, [])
 
   const filteredFigures = figures.filter((figure) => {
-
     const matchesSearch =
       figure.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       figure.note.toLowerCase().includes(searchTerm.toLowerCase())
-
     const matchesDifficulty =
       difficultyFilter === "" ||
       figure.difficulty === Number(difficultyFilter)
-
     return matchesSearch && matchesDifficulty
   })
 
   const [editMode, setEditMode] = useState(false)
   const [editedFigures, setEditedFigures] = useState<Figure[]>([])
-
   async function saveChanges() {
-
     for (const fig of editedFigures) {
-
       await supabase
         .from("figures")
         .update({
@@ -76,9 +65,7 @@ export default function FiguresPage() {
           end_time: fig.end_time
         })
         .eq("id", fig.id)
-
     }
-
     setFigures(editedFigures)
     setEditMode(false)
 
@@ -86,13 +73,10 @@ export default function FiguresPage() {
 
 
   return (
-
     <main className="p-10">
-
       <h1 className="text-2xl font-bold mb-6">
         {dance.toUpperCase()} Figures
       </h1>
-
       <input
         type="text"
         placeholder="Search figures..."
@@ -100,7 +84,6 @@ export default function FiguresPage() {
         value={searchTerm}
         onChange={(e) => setSearchTerm(e.target.value)}
       />
-
       <select
         className="border p-2 mb-6 ml-4"
         value={difficultyFilter}
@@ -114,44 +97,37 @@ export default function FiguresPage() {
         <option value="5">5</option>
       </select>
 
+      {!editMode && (
+      <><div className="flex gap-4 mb-4">
+          <button
+            className="bg-blue-500 text-white px-4 py-2 rounded"
+            onClick={()=>{setOpenVideos(new Set(figures.map(f => f.id)))}}
+          >
+            Preview All
+          </button>
+          <button
+            className="bg-gray-500 text-white px-4 py-2 rounded"
+            onClick={() => {setOpenVideos(new Set())} }
+          >
+            Hide All
+          </button>
+          <button
+            className="bg-yellow-500 text-white px-4 py-2 rounded"
+            onClick={() => {
+              setEditedFigures(figures)
+              setEditMode(true)
+            } }
+          >
+            Edit
+          </button>
+          </div></>
+      )}
 
+      {editMode && (
       <div className="flex gap-4 mb-4">
-        <button
-          className="bg-blue-500 text-white px-4 py-2 rounded"
-          onClick={() => setShowAllVideos(true)}
-        >
-          Preview All
-        </button>
-
-        <button
-          onClick={() => {
-            setShowAllVideos(false)
-            setResetPreviewSignal((v) => v + 1)
-          }}
-        >
-          Hide All
-        </button>
-      </div>
-
-      <div className="flex gap-4 mb-4">
-
-        <button
-          className="bg-yellow-500 text-white px-4 py-2 rounded"
-          onClick={() => {
-            setEditedFigures(figures)
-            setEditMode(true)
-          }}
-        >
-          Edit
-        </button>
-
         <button
           className="bg-blue-600 text-white px-4 py-2 rounded"
-          onClick={() => {
-
-            setEditedFigures([
-              ...editedFigures,
-              {
+          onClick={() => {setEditedFigures([...editedFigures,{
                 id: crypto.randomUUID(),
                 name: "",
                 difficulty: 1,
@@ -162,51 +138,38 @@ export default function FiguresPage() {
                 dance_style: dance
               }
             ])
-
           }}
         >
-        Add Figure
+        Add
         </button>
-      </div>
-
-      {editMode && (
-
-      <div className="flex gap-4 mb-4">
-
-        <button
-          className="bg-green-600 text-white px-4 py-2 rounded"
-          onClick={saveChanges}
-        >
-          Save
-        </button>
-
         <button
           className="bg-gray-500 text-white px-4 py-2 rounded"
           onClick={() => setEditMode(false)}
         >
           Cancel
         </button>
-
+        <button
+          className="bg-green-600 text-white px-4 py-2 rounded"
+          onClick={saveChanges}
+        >
+          Save
+        </button>
       </div>
-
       )}
 
       <table className="w-full border-collapse">
-
         <thead>
           <tr className="border-b">
             <th className="text-left p-2">Name</th>
-            <th className="text-left p-2">Difficulty</th>
-            <th className="text-left p-2">Note</th>
-            <th className="text-left p-2">Video</th>
+            <th className="text-left p-2">Difficulty 1-5</th>
+            <th className="text-left p-2">Notes</th>
+            <th className="text-left p-2">Videos</th>
           </tr>
         </thead>
 
         <tbody>
-
         {editMode
           ? editedFigures.map((figure, index) => (
-
             <tr key={figure.id} className="border-b">
 
               <td className="p-2">
@@ -271,20 +234,25 @@ export default function FiguresPage() {
               youtube_url={figure.youtube_url}
               start_time={figure.start_time}
               end_time={figure.end_time}
-              showAllVideos={showAllVideos}
-              resetPreviewSignal={resetPreviewSignal}
-            />
+              isOpen={openVideos.has(figure.id)}
+              toggleVideo={(id) => {
+
+                const updated = new Set(openVideos)
+
+                if (updated.has(id)) {
+                  updated.delete(id)
+                } else {
+                  updated.add(id)
+                }
+
+                setOpenVideos(updated)
+              } } 
+              figureId={figure.id}         />
 
           ))
         }
-
         </tbody>
-
-
-
       </table>
-
     </main>
-
   )
 }

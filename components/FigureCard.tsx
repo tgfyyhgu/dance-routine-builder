@@ -18,23 +18,26 @@ import { useState, useEffect } from "react"
   }
 
 type Props = {
+  readonly figureId: string
   readonly name: string
   readonly difficulty?: number
   readonly note?: string
   readonly youtube_url?: string;
   readonly start_time?: number | null;
   readonly end_time: number | null;
-  readonly showAllVideos?: boolean
-  readonly resetPreviewSignal?: number
+  //readonly previewMode?: "none" | "all"
+  readonly isOpen: boolean
+  readonly toggleVideo: (id:string)=>void
   
 }
 // This component is responsible for rendering a single figure's information in a table row, along with a button to toggle the video preview. It also handles extracting the YouTube video ID from the provided URL and embedding the video when requested.
 export default function FigureCard(
-  { name, difficulty, note, youtube_url, start_time, end_time, showAllVideos = false, resetPreviewSignal = 0}: 
+  { figureId, name, difficulty, note, youtube_url, start_time, end_time, isOpen, toggleVideo }: 
   Props) {//
 //
-  const [showVideo, setShowVideo] = useState(false)
-  const videoVisible = showAllVideos || showVideo  
+  //const [showVideo, setShowVideo] = useState(false)
+  //const videoVisible = previewMode==="all" || showVideo
+  const videoVisible = isOpen
 
   let videoId: string | null = null;
 
@@ -70,7 +73,8 @@ export default function FigureCard(
           {videoId && (
             <button
               className="text-blue-600 underline"
-              onClick={() => setShowVideo(!showVideo)}
+              //onClick={() => setShowVideo(!showVideo)}
+              onClick={() => toggleVideo(figureId)}
             >
               {videoVisible ? "Hide" : "Preview"}
             </button>
