@@ -1,16 +1,49 @@
-export default function Home() {
+import Link from "next/link"
+
+const dances = [
+  "waltz",
+  "tango",
+  "viennese",
+  "foxtrot",
+  "quickstep",
+  "cha",
+  "samba",
+  "rumba",
+  "paso",
+  "jive"
+]
+
+export default function HomePage() {
 
   return (
-    <main className="p-10">
 
-      <h1 className="text-3xl font-bold">
-        Dance Routine Builder
+    <main className="min-h-screen bg-gray-50 flex flex-col items-center p-12">
+
+      <h1 className="text-4xl font-bold mb-4 text-center">
+        Ballroom Dance Routine Builder
       </h1>
 
-      <p className="mt-4">
-        Create Latin & Ballroom choreography using drag and drop.
+      <p className=" text-gray-600 mb-12">
+        Select a dance style
       </p>
 
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 w-full max-w-4xl">
+
+        {dances.map((dance) => (
+
+          <Link
+            key={dance}
+            href={`/${dance}/figures`}
+            className="bg-white shadow rounded-xl p-6 text-center text-lg font-semibold hover:shadow-lg hover:scale-105 transition"
+          >
+            {dance.toUpperCase()}
+          </Link>
+
+        ))}
+
+      </div>
+
     </main>
+
   )
 }

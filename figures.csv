@@ -1,5 +1,7 @@
-name,difficulty,note,youtube_url,start_time,end_time
-"Box Step",2,"Can be danced in hold or solo",https://www.youtube.com/watch?v=2f1_TWGyim8,145,150
-"New York",4,"Simple variation of 8 bars",https://www.youtube.com/watch?v=v8sWEp6phq4&list=RDhYHw843i_1A&index=8,4,16
-"Left Locks",3,"Chest push",https://www.youtube.com/watch?v=NzpXw3dsDG8&list=RDMM&index=36,78,88
-"Underarm Change of Place",3,"Progression",https://www.youtube.com/watch?v=p57HssGAjpI&list=RDMM&start_radio=1,151,158
+name,difficulty,note,youtube_url,start_time,end_time,dance_style
+"Box Step",2,"Can be danced in hold or solo",https://www.youtube.com/watch?v=2f1_TWGyim8,145,150,cha
+"New York",4,"Simple variation of 8 bars",https://www.youtube.com/watch?v=v8sWEp6phq4&list=RDhYHw843i_1A&index=8,4,16,cha
+"Left Locks",3,"Chest push",https://www.youtube.com/watch?v=NzpXw3dsDG8&list=RDMM&index=36,78,88,cha
+"Underarm Change of Place",3,"Progression",https://www.youtube.com/watch?v=p57HssGAjpI&list=RDMM&start_radio=1,151,158,cha
+"Promenade runs",3,"stop with spin",https://www.youtube.com/watch?v=5Fkt1D7u1cQ,110,118,samba
+"Promenade runs",5,"spin, promenades, plait, circle",https://www.youtube.com/watch?v=Z8a3MU3o7Q4,27,40,samba
