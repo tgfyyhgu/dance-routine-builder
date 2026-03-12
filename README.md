@@ -34,3 +34,15 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## Project Overview
+
+**Dance Routine Builder** is a web application for managing and organizing dance figures and routines. Built with Next.js and Supabase, it allows users to:
+
+- **Browse Dance Figures**: View a comprehensive list of figures for different dance styles
+- **Search & Filter**: Find specific figures by name, notes, or difficulty level (1-5 scale)
+- **Watch Video References**: Preview YouTube videos for each figure with customizable start/end times
+- **Manage Figures**: Add, edit, and delete figures in an admin interface
+- **Persistent Storage**: All data is stored in Supabase for reliable access
+
+The application uses a modular component structure with a `FigureCard` component for displaying individual figures and their video previews. The figures page allows choreographers and dancers to organize routines efficiently.

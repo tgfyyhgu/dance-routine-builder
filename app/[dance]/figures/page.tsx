@@ -50,25 +50,86 @@ export default function FiguresPage() {
 
   const [editMode, setEditMode] = useState(false)
   const [editedFigures, setEditedFigures] = useState<Figure[]>([])
+
+
+  // The saveChanges function validates the edited figures, identifies which figures have been deleted, updated, or added, and then performs the corresponding database operations using Supabase. After saving, it updates the local state and exits edit mode.
   async function saveChanges() {
+
     for (const fig of editedFigures) {
+
+      if (!fig.name) {
+        alert("Name cannot be empty")
+        return
+      }
+
+      if (fig.end_time && fig.start_time && fig.end_time <= fig.start_time) {
+        alert(`End time must be greater than start time for ${fig.name}`)
+        return
+      }
+
+    }
+
+    const originalIds = figures.map(f => f.id)
+    const editedIds = editedFigures.map(f => f.id)
+
+    const deletedIds = originalIds.filter(id => !editedIds.includes(id))
+
+    // DELETE
+    for (const id of deletedIds) {
       await supabase
         .from("figures")
-        .update({
-          name: fig.name,
-          difficulty: fig.difficulty,
-          note: fig.note,
-          youtube_url: fig.youtube_url,
-          start_time: fig.start_time,
-          end_time: fig.end_time
-        })
-        .eq("id", fig.id)
+        .delete()
+        .eq("id", id)
     }
+
+    for (const fig of editedFigures) {
+
+      if (originalIds.includes(fig.id)) {
+
+        // UPDATE
+        await supabase
+          .from("figures")
+          .update({
+            name: fig.name,
+            difficulty: fig.difficulty,
+            note: fig.note,
+            youtube_url: fig.youtube_url,
+            start_time: fig.start_time,
+            end_time: fig.end_time
+          })
+          .eq("id", fig.id)
+
+      } else {
+
+        // INSERT
+        await supabase
+          .from("figures")
+          .insert({
+            id: fig.id,
+            name: fig.name,
+            difficulty: fig.difficulty,
+            note: fig.note,
+            youtube_url: fig.youtube_url,
+            start_time: fig.start_time,
+            end_time: fig.end_time,
+            dance_style: dance
+          })
+
+      }
+
+    }
+
     setFigures(editedFigures)
     setEditMode(false)
 
   }
+  
 
+  function toggleVideo(id: string) {
+    const updated = new Set(openVideos)
+    if (updated.has(id)) {updated.delete(id)} else {updated.add(id)}
+    setOpenVideos(updated)
+  }
 
   return (
     <main className="p-10">
@@ -96,18 +157,18 @@ export default function FiguresPage() {
       </select>
 
       {!editMode && (
-      <><div className="flex gap-4 mb-4">
+      <div className="flex gap-4 mb-4">
           <button
             className="bg-blue-500 text-white px-4 py-2 rounded"
             onClick={()=>{setOpenVideos(new Set(figures.map(f => f.id)))}}
           >
-            Preview All
+            View All
           </button>
           <button
             className="bg-gray-500 text-white px-4 py-2 rounded"
             onClick={() => {setOpenVideos(new Set())} }
           >
-            Hide All
+            Collapse All
           </button>
           <button
             className="bg-yellow-500 text-white px-4 py-2 rounded"
@@ -118,7 +179,7 @@ export default function FiguresPage() {
           >
             Edit
           </button>
-          </div></>
+          </div>
       )}
 
       {editMode && (
@@ -166,64 +227,141 @@ export default function FiguresPage() {
         </thead>
 
         <tbody>
+
         {editMode
-          ? editedFigures.map((figure, index) => (
-            <tr key={figure.id} className="border-b">
+          ? editedFigures.map((figure, index) => {
 
-              <td className="p-2">
+              let videoId: string | null = null
+
+              if (figure.youtube_url) {
+                const regExp =
+                  /^.*(?:youtu\.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/
+                const match = regExp.exec(figure.youtube_url)
+                videoId = match?.[1].length === 11 ? match[1] : null
+              }
+
+              return (
+
+                <>
+                <tr key={figure.id} className="border-b">
+
+                <td className="p-2">
                 <input
-                  className="border p-1 w-full"
-                  value={figure.name}
-                  onChange={(e) => {
-                    const updated = [...editedFigures]
-                    updated[index].name = e.target.value
-                    setEditedFigures(updated)
-                  }}
+                className="border p-1 w-full"
+                value={figure.name}
+                onChange={(e)=>{
+                const updated=[...editedFigures]
+                updated[index].name=e.target.value
+                setEditedFigures(updated)
+                }}
                 />
-              </td>
+                </td>
 
-              <td className="p-2">
+                <td className="p-2">
                 <input
-                  type="number"
-                  className="border p-1 w-20"
-                  value={figure.difficulty}
-                  onChange={(e) => {
-                    const updated = [...editedFigures]
-                    updated[index].difficulty = Number(e.target.value)
-                    setEditedFigures(updated)
-                  }}
+                type="number"
+                className="border p-1 w-16"
+                value={figure.difficulty}
+                onChange={(e)=>{
+                const updated=[...editedFigures]
+                updated[index].difficulty=Number(e.target.value)
+                setEditedFigures(updated)
+                }}
                 />
-              </td>
+                </td>
 
-              <td className="p-2">
+                <td className="p-2">
                 <input
-                  className="border p-1 w-full"
-                  value={figure.note}
-                  onChange={(e) => {
-                    const updated = [...editedFigures]
-                    updated[index].note = e.target.value
-                    setEditedFigures(updated)
-                  }}
+                className="border p-1 w-full"
+                value={figure.note}
+                onChange={(e)=>{
+                const updated=[...editedFigures]
+                updated[index].note=e.target.value
+                setEditedFigures(updated)
+                }}
                 />
-              </td>
+                </td>
 
-              <td className="p-2">
+                <td className="p-2">
+                <input
+                className="border p-1 w-full"
+                placeholder="YouTube URL"
+                value={figure.youtube_url}
+                onChange={(e)=>{
+                const updated=[...editedFigures]
+                updated[index].youtube_url=e.target.value
+                setEditedFigures(updated)
+                }}
+                />
+                </td>
+
+                <td className="p-2">
+                <input
+                type="number"
+                className="border p-1 w-20"
+                placeholder="start"
+                value={figure.start_time}
+                onChange={(e)=>{
+                const updated=[...editedFigures]
+                updated[index].start_time=Number(e.target.value)
+                setEditedFigures(updated)
+                }}
+                />
+                </td>
+
+                <td className="p-2">
+                <input
+                type="number"
+                className="border p-1 w-20"
+                placeholder="end"
+                value={figure.end_time}
+                onChange={(e)=>{
+                const updated=[...editedFigures]
+                updated[index].end_time=Number(e.target.value)
+                setEditedFigures(updated)
+                }}
+                />
+                </td>
+
+                <td>
                 <button
-                  className="text-red-600"
-                  onClick={() => {
-                    const updated = editedFigures.filter((_, i) => i !== index)
-                    setEditedFigures(updated)
-                  }}
+                className="text-red-600"
+                onClick={()=>{
+                const updated=editedFigures.filter((_,i)=>i!==index)
+                setEditedFigures(updated)
+                }}
                 >
-                  Delete
+                Delete
                 </button>
-              </td>
+                </td>
 
-            </tr>
+                </tr>
 
-          ))
+                {videoId && (
+
+                <tr className="bg-gray-50">
+
+                <td colSpan={7} className="p-4">
+
+                <iframe
+                width="420"
+                height="240"
+                src={`https://www.youtube.com/embed/${videoId}?start=${figure.start_time || 0}&end=${figure.end_time || ""}`}
+                allowFullScreen
+                />
+
+                </td>
+
+                </tr>
+
+                )}
+
+                </>
+
+              )
+
+          })
           : filteredFigures.map((figure) => (
-
             <FigureCard
               key={figure.id}
               name={figure.name}
@@ -233,22 +371,17 @@ export default function FiguresPage() {
               start_time={figure.start_time}
               end_time={figure.end_time}
               isOpen={openVideos.has(figure.id)}
-              toggleVideo={(id) => {
-
-                const updated = new Set(openVideos)
-
-                if (updated.has(id)) {
-                  updated.delete(id)
-                } else {
-                  updated.add(id)
-                }
-
-                setOpenVideos(updated)
-              } } 
-              figureId={figure.id}         />
-
+              toggleVideo={toggleVideo}
+              figureId={figure.id}
+            />
           ))
         }
+
+
+
+
+
+
         </tbody>
       </table>
     </main>
