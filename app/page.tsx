@@ -17,7 +17,7 @@ export default function HomePage() {
 
   return (
 
-    <main className="min-h-screen bg-gray-50 flex flex-col items-center p-12">
+    <main className="bg-gray-50 dark:bg-gray-950 flex flex-col items-center p-12">
 
       <h1 className="text-4xl font-bold mb-4 text-center">
         Ballroom Dance Routine Builder
