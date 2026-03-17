@@ -1,184 +1,47 @@
 /**
- * PHASE 2: CHOREO PAGE (MAIN ORCHESTRATOR)
- * 
- * This is the CORE component that manages the entire choreography builder experience.
- * 
- * Think of it like the "conductor" in a band:
- * - It doesn't play music itself (that's what the UI components do)
- * - But it coordinates everything: data flow, state changes, database operations
- * - It passes data to child components and listens to their events
- * 
- * This page handles:
- * ├─ Loading figures from Supabase
- * ├─ Loading existing routines from Supabase
- * ├─ Managing undo/redo history
- * ├─ Drag & drop interactions
- * ├─ Adding/removing/reordering routine steps
- * ├─ Saving routines to Supabase
- * ├─ Exporting/importing routines as JSON
- * └─ Detecting unsaved changes
+ * Main choreography builder orchestrator.
+ * Manages state (routine, undo/redo, figures), Supabase operations, and 3-panel layout.
  */
 
 "use client"
 
-// ============ IMPORTS ============
-
-// React hooks for state management and side effects
+// React hooks
 import { useEffect, useState, useRef } from "react"
-
-// Next.js hooks for reading URL parameters
-// useParams: reads dynamic route params like [dance]
-// useSearchParams: reads query string params like ?routineId=123
+// Next.js routing
 import { useParams, useSearchParams } from "next/navigation"
-
-// Next.js Link component for navigation
 import Link from "next/link"
-
-// Drag-and-drop library from dnd-kit
+// Drag & drop
 import { DndContext, DragEndEvent, pointerWithin } from "@dnd-kit/core"
-
-// Database client from Supabase
+// Database
 import { supabase } from "@/lib/supabaseClient"
-
-// Child components that render the UI
+// Components
 import RoutineBuilder from "@/components/RoutineBuilder"
 import RoutinePlayer from "@/components/RoutinePlayer"
 import FigurePanel from "@/components/FigurePanel"
-
-// Data types (interfaces) from Phase 1
+// Types & utilities
 import { Figure, RoutineStep } from "@/types/routine"
-
-// UUID library for generating unique IDs
 import { v4 as uuid } from "uuid"
-
-// Import/export utilities
 import { exportRoutine } from "@/lib/routineExport"
 import { importRoutine } from "@/lib/routineImport"
 
 /**
- * MAIN COMPONENT: ChoreoPage
- * 
- * This component:
- * 1. Fetches data from Supabase (figures, existing routine)
- * 2. Manages all state (routine, undo/redo stack, UI state)
- * 3. Renders 3 child components in a 3-panel layout:
- *    - Left: FigurePanel (list of draggable figures)
- *    - Center: RoutineBuilder (where user builds the routine)
- *    - Right: RoutinePlayer (video preview of current step)
+ * 3-panel choreography editor: left (figures), center (builder), right (player).
  */
 export default function ChoreoPage() {
-  // ============ URL PARAMETERS ============
-  
-  // Extract the dance style from URL route (/waltz/choreo, /tango/choreo, etc.)
-  // Example: If URL is "localhost:3000/waltz/choreo", then dance = "waltz"
   const params = useParams()
   const searchParams = useSearchParams()
   const dance = params.dance as string
-  
-  // Extract routine ID from query string (/choreo?routineId=abc123)
-  // If user is editing an existing routine, this will be set
-  // If creating new routine, this will be null
   const routineIdFromUrl = searchParams.get("routineId")
 
-  // ============ STATE: DATA FROM DATABASE ============
-  
-  /**
-   * figures: All available figures for this dance style
-   * Example for waltz: [
-   *   { id: "1", name: "Feather Step", difficulty: 3, ... },
-   *   { id: "2", name: "Natural Turn", difficulty: 2, ... },
-   *   ...
-   * ]
-   * Loaded from Supabase "figures" table on first mount
-   */
+  // State: UI & data
   const [figures, setFigures] = useState<Figure[]>([])
-  
-  // ============ STATE: UI PANELS ============
-  
-  /**
-   * expanded: Which figure's video preview is expanded (or null if none)
-   * In FigurePanel on the left, user can click a figure to expand its video
-   * Only ONE figure can be expanded at a time
-   * Example: expanded = "fig-123" means video for figure "fig-123" is showing
-   */
   const [expanded, setExpanded] = useState<string | null>(null)
-  
-  /**
-   * panelWidth: Width of the left FigurePanel in pixels
-   * Default: 300px
-   * User can drag the panel border to resize it to 120-500px
-   * Why? So user can make the figure list narrower or wider based on preference
-   */
   const [panelWidth, setPanelWidth] = useState(300)
-  
-  /**
-   * collapsed: Is the FigurePanel completely hidden?
-   * When panelWidth < 120px, automatically collapse the panel
-   * User can toggle this to hide/show the entire figures list
-   */
   const [collapsed, setCollapsed] = useState(false)
-
-  // ============ STATE: THE ROUTINE (CORE DATA) ============
-  
-  /**
-   * routine: The user's choreography sequence
-   * This is the CURRENT state of what the user is building
-   * 
-   * Structure: Array of RoutineSteps in order
-   * [
-   *   { stepId: "step-1", figure: { id: "fig-1", name: "Feather", ... } },
-   *   { stepId: "step-2", figure: { id: "fig-2", name: "Natural Turn", ... } },
-   *   ...
-   * ]
-   * 
-   * When user drags a figure into the builder, a new RoutineStep is added here
-   * When user removes a step, it's deleted from here
-   * When user reorders steps, this array is reordered
-   * When user clicks Undo, this is replaced with value from history[]
-   */
+  // State: routine & history
   const [routine, setRoutine] = useState<RoutineStep[]>([])
-  
-  /**
-   * history: Stack of PAST routine states (for Undo)
-   * 
-   * Think of it like a "save points" system in a video game:
-   * Every time user makes a change, the OLD state is saved here
-   * 
-   * Example:
-   * User starts:         routine = []                    history = []
-   * User adds step 1:    routine = [step1]               history = [[]]
-   * User adds step 2:    routine = [step1, step2]        history = [[], [step1]]
-   * User clicks Undo:    routine = [step1]               history = [[]]
-   * 
-   * When user undoes:
-   *   Take the LAST item from history (previous state)
-   *   Put current routine into future[] (for redo)
-   *   Replace routine with the previous state
-   */
   const [history, setHistory] = useState<RoutineStep[][]>([])
-  
-  /**
-   * future: Stack of FORWARD routine states (for Redo)
-   * 
-   * After user undoes, Redo lets them go forward again
-   * 
-   * Example:
-   * User is at:          routine = [step1]
-   * User had added step2, then undone it
-   * 
-   * User clicks Redo:    
-   *   - Take first item from future (which is [step1, step2])
-   *   - Put current routine into history
-   *   - Replace routine with the future state
-   */
   const [future, setFuture] = useState<RoutineStep[][]>([])
-  
-  /**
-   * currentStep: Which step is being previewed in the RoutinePlayer video?
-   * Example: currentStep = 1 means "show the video for step at index 1"
-   * User can click on a step in the builder to jump to it
-   * Or RoutinePlayer can auto-advance when a video ends
-   */
   const [currentStep, setCurrentStep] = useState(0)
 
   // ============ STATE: ROUTINE METADATA ============
@@ -839,6 +702,7 @@ export default function ChoreoPage() {
    *    - Clear unsaved changes flag
    *    - Show success message for 2 seconds
    */
+
   async function saveRoutine() {
     // Validate: routine name must not be empty or whitespace
     const trimmedName = routineName.trim()
@@ -1133,15 +997,12 @@ export default function ChoreoPage() {
     if (!file) return  // User clicked cancel, no file selected
 
     try {
-      setSaveStatus("Loading file...")  // LOADING STATE: User feedback
-      
       // Parse the JSON file using utility function
       const importedRoutine = await importRoutine(file)
       
       // ============ VALIDATION #1: Check structure ============
       // Imported data MUST have steps array
       if (!importedRoutine.steps || !Array.isArray(importedRoutine.steps)) {
-        setSaveStatus("❌ Invalid file format")
         alert("Invalid routine file: missing steps data")
         return
       }
@@ -1163,7 +1024,6 @@ export default function ChoreoPage() {
 
       // If ANY figures are missing, tell user and abort
       if (missingFigures.length > 0) {
-        setSaveStatus("❌ Missing figures")
         alert(
           `The following figures are not available in this dance style:\n${missingFigures.join("\n")}\n\nPlease add them to the figures library first.`
         )
@@ -1179,15 +1039,12 @@ export default function ChoreoPage() {
       setCurrentStep(0)                 // Start at first step
       setRoutineId(null)                // Set to null so "Save" creates new routine
       
-      // IMPROVED FEEDBACK: Use status message instead of alert
-      setSaveStatus("✓ Imported successfully")
-      setTimeout(() => setSaveStatus(null), 2000)
+      // Notify user of success
+      alert(`Routine "${importedRoutine.name}" imported successfully!`)
     } catch (error) {
-      // IMPROVED ERROR HANDLING: If anything goes wrong (invalid JSON, file read error, etc.)
+      // If anything goes wrong (invalid JSON, file read error, etc.)
       console.error("Error importing routine:", error)
-      setSaveStatus("❌ Import failed")
-      const errorMsg = error instanceof Error ? error.message : "Unknown error"
-      alert(`Error importing routine: ${errorMsg}`)
+      alert(`Error importing routine: ${error instanceof Error ? error.message : "Unknown error"}`)
     } finally {
       // Cleanup: Reset the file input
       // Why? So user can select the SAME file again if they want
@@ -1349,7 +1206,6 @@ export default function ChoreoPage() {
                 <RoutineBuilder
                   routine={routine}
                   onRemoveStep={removeStep}
-                  onReorderSteps={reorderSteps}
                   onUndo={undo}
                   onRedo={redo}
                   onJumpToStep={setCurrentStep}

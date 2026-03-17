@@ -1,9 +1,6 @@
 /**
- * PHASE 5: ROUTINE PLAYER COMPONENT
- * 
- * FILE PURPOSE: RoutinePlayer is the RIGHT SIDE PANEL showing video playback.
- * High-level role: Display YouTube video, provide playback controls, enable auto-play through routine.
- * Features: Manual/auto navigation, play/pause, fullscreen, progress tracking.
+ * Right panel: YouTube video player with playback controls and step navigation.
+ * Auto-advances to next step when video ends (if autoplay enabled).
  */
 "use client"
 
@@ -59,16 +56,13 @@ export default function RoutinePlayer({ steps, currentStep, onStepChange }: Prop
     const firstScriptTag = document.getElementsByTagName("script")[0]
     firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag)
 
-    globalThis.window.onYouTubeIframeAPIReady = () => {
-      // API is ready
-    }
+    globalThis.window.onYouTubeIframeAPIReady = () => {}
   }, [])
 
   // Initialize player when videoId changes
   useEffect(() => {
     if (!videoId || !globalThis.window?.YT) return
 
-    // Destroy old player if it exists
     if (playerInstanceRef.current?.destroy) {
       playerInstanceRef.current.destroy()
     }
@@ -88,11 +82,10 @@ export default function RoutinePlayer({ steps, currentStep, onStepChange }: Prop
       },
       events: {
         onReady: () => {
-          // Seek to start time when player is ready
           playerInstanceRef.current?.seekTo(startTime)
         },
         onStateChange: (event: { data: number }) => {
-          // 1 = playing, 2 = paused
+          // 1 = playing, 2 = paused, 0 = ended
           setPlaying(event.data === 1)
 
           // Auto-advance when video ends

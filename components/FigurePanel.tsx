@@ -1,9 +1,6 @@
 /**
- * PHASE 4: FIGURE PANEL COMPONENT
- * 
- * FILE PURPOSE: FigurePanel is the LEFT SIDE PANEL of the choreography editor.
- * High-level role: Display draggable, expandable list of dance figures.
- * Users drag figures to builder, can expand for video previews, and resize/collapse panel.
+ * Left panel: draggable, expandable list of dance figures for choreography builder.
+ * Users can drag figures to add them or expand for video previews.
  */
 "use client"
 
@@ -38,9 +35,8 @@ interface DraggableFigureProps {
 }
 
 /**
- * OPTIMIZATION: React.memo prevents re-renders when parent updates
- * Unless props change, this component won't re-render even if FigurePanel re-renders
- * Benefit: Smooths drag-drop performance by avoiding unnecessary DOM recalculations
+ * React.memo prevents re-renders unless props change.
+ * Improves drag-drop performance by avoiding unnecessary DOM recalculations.
  */
 const DraggableFigure = memo(function DraggableFigure({ figure, isExpanded, onToggleExpand, onAddFigure }: DraggableFigureProps) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
@@ -124,9 +120,10 @@ const DraggableFigure = memo(function DraggableFigure({ figure, isExpanded, onTo
       }}
     >
       <div className="flex items-center justify-between w-full p-2 hover:bg-gray-100">
-        <div
+        <button
           ref={setNodeRef}
-          className="flex-1 text-left cursor-grab active:cursor-grabbing text-sm"
+          type="button"
+          className="flex-1 text-left cursor-grab active:cursor-grabbing text-sm bg-transparent border-none p-0"
           {...listeners}
           {...attributes}
           onClick={(e) => {
@@ -135,8 +132,9 @@ const DraggableFigure = memo(function DraggableFigure({ figure, isExpanded, onTo
           }}
         >
           {figure.name}
-        </div>
+        </button>
         <button
+          type="button"
           onClick={(e) => {
             e.stopPropagation()
             onToggleExpand(figure.id)

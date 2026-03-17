@@ -38,7 +38,7 @@ export default function FiguresPage() {
       }
     }
     loadFigures()
-  }, [])
+  }, [dance])
 
   const filteredFigures = figures.filter((figure) => {
     const matchesSearch =
@@ -58,7 +58,6 @@ export default function FiguresPage() {
   // Auto-scroll to bottom when new figure is added
   useEffect(() => {
     if (editMode && editedFigures.length > previousLengthRef.current) {
-      // New figure was added, scroll to bottom
       setTimeout(() => {
         tableBodyRef.current?.lastElementChild?.scrollIntoView({ behavior: "smooth", block: "end" })
       }, 0)
@@ -67,7 +66,7 @@ export default function FiguresPage() {
   }, [editedFigures.length, editMode])
 
 
-  // The saveChanges function validates the edited figures, identifies which figures have been deleted, updated, or added, and then performs the corresponding database operations using Supabase. After saving, it updates the local state and exits edit mode.
+  // Validate edited figures and sync with Supabase (delete, update, insert)
   async function saveChanges() {
 
     for (const fig of editedFigures) {
@@ -85,9 +84,9 @@ export default function FiguresPage() {
     }
 
     const originalIds = figures.map(f => f.id)
-    const editedIds = editedFigures.map(f => f.id)
+    const editedIds = new Set(editedFigures.map(f => f.id))
 
-    const deletedIds = originalIds.filter(id => !editedIds.includes(id))
+    const deletedIds = originalIds.filter(id => !editedIds.has(id))
 
     try {
       // DELETE
@@ -419,6 +418,7 @@ export default function FiguresPage() {
                         <iframe
                           width="420"
                           height="240"
+                          title={`${figure.name || "Figure"} - YouTube video`}
                           src={`https://www.youtube.com/embed/${videoId}?start=${figure.start_time || 0}&end=${figure.end_time || ""}`}
                           allowFullScreen
                         />
