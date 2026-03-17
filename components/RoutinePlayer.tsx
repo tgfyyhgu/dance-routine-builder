@@ -38,6 +38,15 @@ export default function RoutinePlayer({
     ? (regExp.exec(step.figure.youtube_url)?.[1] ?? null)
     : null
 
+  // Debug logging for troubleshooting old figures
+  useEffect(() => {
+    if (step?.figure.youtube_url) {
+      const pattern = /^.*(?:youtu\.be\/|watch\?v=)([^#&?]*).*/
+      const extracted = pattern.exec(step?.figure.youtube_url)?.[1]
+      console.log(`[RoutinePlayer] Figure: ${step.figure.name} | URL: ${step.figure.youtube_url} | VideoID: ${extracted || 'NONE'}`)
+    }
+  }, [step?.figure.youtube_url, step?.figure.name])
+
   // Load YouTube API script
   useEffect(() => {
     if (typeof globalThis === "undefined" || globalThis.window?.YT) return
