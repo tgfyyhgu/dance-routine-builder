@@ -3,53 +3,69 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { login } from '@/lib/auth'
+import { signup } from '@/lib/auth'
 
-export default function LoginPage() {
+export default function SignupPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState(false)
   const [loading, setLoading] = useState(false)
   const router = useRouter()
 
-  async function handleLogin(e: React.FormEvent<HTMLFormElement>) {
+  async function handleSignup(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setError(null)
+
+    if (password !== confirmPassword) {
+      setError('Passwords do not match')
+      return
+    }
+
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters')
+      return
+    }
+
     setLoading(true)
-    console.log('🔐 Login attempt:', email)
 
     try {
-      const { data, error: authError } = await login(email, password)
-      console.log('📡 Response:', { data, error: authError })
+      const { data, error: authError } = await signup(email, password)
 
       if (authError) {
-        console.log('❌ Auth error:', authError.message)
         setError(authError.message)
         setLoading(false)
         return
       }
 
       if (data.user) {
-        console.log('✅ Login success, User:', data.user.email)
-        console.log('🚀 Redirecting to /my-routines...')
-        router.push('/my-routines')
-      } else {
-        console.log('⚠️ No user data returned')
-        setError('Login failed: no user data')
+        setSuccess(true)
+        setTimeout(() => {
+          router.push('/login')
+        }, 2000)
       }
-    } catch (err) {
-      console.log('💥 Catch error:', err)
+    } catch {
       setError('An unexpected error occurred')
     } finally {
       setLoading(false)
     }
   }
 
+  if (success) {
+    return (
+      <div className="max-w-md mx-auto mt-8 p-6 border rounded-lg bg-green-50">
+        <h1 className="text-2xl font-bold mb-4 text-green-700">Account Created!</h1>
+        <p className="text-green-600">Redirecting to login...</p>
+      </div>
+    )
+  }
+
   return (
     <div className="max-w-md mx-auto mt-8 p-6 border rounded-lg">
-      <h1 className="text-2xl font-bold mb-6">Login</h1>
+      <h1 className="text-2xl font-bold mb-6">Sign Up</h1>
 
-      <form onSubmit={handleLogin} className="space-y-4">
+      <form onSubmit={handleSignup} className="space-y-4">
         <div>
           <label htmlFor="email" className="block text-sm font-medium mb-1">Email</label>
           <input
@@ -74,6 +90,18 @@ export default function LoginPage() {
           />
         </div>
 
+        <div>
+          <label htmlFor="confirmPassword" className="block text-sm font-medium mb-1">Confirm Password</label>
+          <input
+            id="confirmPassword"
+            type="password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            required
+            className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+
         {error && <p className="text-red-600 text-sm">{error}</p>}
 
         <button
@@ -81,14 +109,14 @@ export default function LoginPage() {
           disabled={loading}
           className="w-full bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600 disabled:bg-gray-400 font-medium"
         >
-          {loading ? 'Logging in...' : 'Login'}
+          {loading ? 'Creating account...' : 'Sign Up'}
         </button>
       </form>
 
       <p className="text-center mt-4 text-sm">
-        Don&apos;t have an account?{' '}
-        <Link href="/signup" className="text-blue-500 hover:underline">
-          Sign up
+        Already have an account?{' '}
+        <Link href="/login" className="text-blue-500 hover:underline">
+          Login
         </Link>
       </p>
     </div>

@@ -449,12 +449,7 @@ export default function FiguresPage() {
               />
             ))
           }
-
-
-
-
-
-
+          
         </tbody>
       </table>
       </div>
