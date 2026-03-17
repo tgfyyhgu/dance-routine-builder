@@ -73,9 +73,15 @@ export default function RoutinePlayer({
       },
       events: {
         onReady: () => {
-          // Just seek to start time and let YouTube settle
-          // Don't control playback here - causes state confusion
+          // Just seek to start time
           playerInstanceRef.current?.seekTo(startTime)
+          
+          // If this load is from an auto-advance, play immediately
+          // This runs after player is definitely initialized
+          if (autoAdvancingRef.current && repeatMode === 'repeatAll') {
+            autoAdvancingRef.current = false
+            playerInstanceRef.current?.playVideo()
+          }
         },
         onStateChange: (event: { data: number }) => {
           // 1 = playing, 2 = paused, 0 = ended
@@ -109,20 +115,6 @@ export default function RoutinePlayer({
       // Cleanup will happen when this effect runs again with new videoId
     }
   }, [videoId, step?.figure.start_time, step?.figure.end_time, currentStep, steps.length, onStepChange, playerId, repeatMode])
-
-  // Handle auto-play for Repeat All mode when video loads from auto-advance
-  useEffect(() => {
-    // Guard against calling playVideo before player is fully initialized
-    if (!playerInstanceRef.current?.playVideo) return
-
-    if (autoAdvancingRef.current && repeatMode === 'repeatAll') {
-      autoAdvancingRef.current = false // Reset flag
-      playerInstanceRef.current.playVideo()
-      // setPlaying will update from onStateChange event
-    }
-    // Trust YouTube's default pause state - don't call pauseVideo() here
-    // Manual navigation and clicks call pauseVideo() directly as needed
-  }, [videoId, repeatMode])
 
   function previous() {
     if (currentStep > 0) {
