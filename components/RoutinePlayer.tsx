@@ -36,7 +36,13 @@ export default function RoutinePlayer({ steps, currentStep, onStepChange }: Prop
   const [playing, setPlaying] = useState(false)
   const playerRef = useRef<HTMLDivElement>(null)
   const playerInstanceRef = useRef<YTPlayer | null>(null)
+  const autoplayRef = useRef(false)
   const playerId = useId()
+
+  // Keep autoplayRef in sync with autoplay state
+  useEffect(() => {
+    autoplayRef.current = autoplay
+  }, [autoplay])
 
   const step = steps.length > 0 ? steps[currentStep] : null
 
@@ -78,7 +84,7 @@ export default function RoutinePlayer({ steps, currentStep, onStepChange }: Prop
         controls: 0,
         start: startTime,
         end: endTime,
-        autoplay: autoplay ? 1 : 0,
+        autoplay: 0,
       },
       events: {
         onReady: () => {
@@ -89,7 +95,7 @@ export default function RoutinePlayer({ steps, currentStep, onStepChange }: Prop
           setPlaying(event.data === 1)
 
           // Auto-advance when video ends
-          if (event.data === 0 && autoplay && currentStep < steps.length - 1) {
+          if (event.data === 0 && autoplayRef.current && currentStep < steps.length - 1) {
             onStepChange(currentStep + 1)
           }
         },
@@ -99,7 +105,7 @@ export default function RoutinePlayer({ steps, currentStep, onStepChange }: Prop
     return () => {
       // Cleanup will happen when this effect runs again with new videoId
     }
-  }, [videoId, autoplay, step?.figure.start_time, step?.figure.end_time, currentStep, steps.length, onStepChange, playerId])
+  }, [videoId, step?.figure.start_time, step?.figure.end_time, currentStep, steps.length, onStepChange, playerId])
 
   function next() {
     if (currentStep < steps.length - 1) {
