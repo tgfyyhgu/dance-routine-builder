@@ -73,19 +73,20 @@ export default function RoutinePlayer({
       },
       events: {
         onReady: () => {
-          // Just seek to start time
+          // Just seek to start time and let YouTube settle like FigurePanel does
+          // Don't call playVideo here - it causes issues with some videos
           playerInstanceRef.current?.seekTo(startTime)
-          
-          // If this load is from an auto-advance, play immediately
-          // This runs after player is definitely initialized
-          if (autoAdvancingRef.current && repeatMode === 'repeatAll') {
-            autoAdvancingRef.current = false
-            playerInstanceRef.current?.playVideo()
-          }
         },
         onStateChange: (event: { data: number }) => {
           // 1 = playing, 2 = paused, 0 = ended
           setPlaying(event.data === 1)
+          
+          // Handle auto-play for Repeat All right after video is ready to play
+          // but before user sees it (state change 2 = paused means video loaded and ready)
+          if (event.data === 2 && autoAdvancingRef.current && repeatMode === 'repeatAll') {
+            autoAdvancingRef.current = false
+            playerInstanceRef.current?.playVideo()
+          }
 
           // Handle end-of-video based on repeat mode
           if (event.data === 0) {
