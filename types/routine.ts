@@ -119,3 +119,28 @@ export interface Routine {
   // Can be reordered by dragging in the UI
   steps: RoutineStep[]
 }
+
+/**
+ * YouTube Player Types
+ * ====================
+ * Shared types for YouTube IFrame API integration.
+ * Used by both FigurePanel (preview) and RoutinePlayer (main video).
+ */
+export interface YTPlayer {
+  playVideo: () => void
+  pauseVideo: () => void
+  seekTo: (seconds: number) => void
+  setPlaybackRate: (rate: number) => void
+  destroy: () => void
+  getCurrentTime: () => number
+}
+
+declare global {
+  interface Window {
+    YT: {
+      Player: new (elementId: string, options: Record<string, unknown>) => YTPlayer
+      PlayerState: Record<string, number>
+    }
+    onYouTubeIframeAPIReady: () => void
+  }
+}

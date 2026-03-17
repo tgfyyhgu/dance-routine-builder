@@ -6,26 +6,8 @@
 
 import { useDraggable } from "@dnd-kit/core"
 import { CSS } from "@dnd-kit/utilities"
-import { Figure } from "@/types/routine"
+import { Figure, YTPlayer } from "@/types/routine"
 import { memo, useRef, useEffect, useId } from "react"
-
-interface YTPlayer {
-  playVideo: () => void
-  pauseVideo: () => void
-  seekTo: (seconds: number) => void
-  destroy: () => void
-  getCurrentTime: () => number
-}
-
-declare global {
-  interface Window {
-    YT: {
-      Player: new (elementId: string, options: Record<string, unknown>) => YTPlayer
-      PlayerState: Record<string, number>
-    }
-    onYouTubeIframeAPIReady: () => void
-  }
-}
 
 interface DraggableFigureProps {
   readonly figure: Figure

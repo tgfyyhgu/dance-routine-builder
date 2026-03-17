@@ -44,8 +44,8 @@ export default function ChoreoPage() {
   const [routine, setRoutine] = useState<RoutineStep[]>([])
   const [history, setHistory] = useState<RoutineStep[][]>([])
   const [future, setFuture] = useState<RoutineStep[][]>([])
-  const [currentStep, setCurrentStepState] = useState(0)
-  const [stepClickedFromBuilder, setStepClickedFromBuilder] = useState(false)
+  const [currentStep, setCurrentStep] = useState(0)
+  const [repeatMode, setRepeatMode] = useState<'repeat1' | 'repeatAll'>('repeatAll')
 
   // Routine metadata
   const [routineName, setRoutineName] = useState("Untitled Routine")
@@ -243,18 +243,6 @@ export default function ChoreoPage() {
   // Toggle figure video preview expansion
   function toggleExpand(id: string) {
     setExpanded(expanded === id ? null : id)
-  }
-
-  // Handle step click from routine builder - marks that it was a click
-  function handleStepClick(stepIndex: number) {
-    setStepClickedFromBuilder(true)
-    setCurrentStepState(stepIndex)
-  }
-
-  // Wrapper for setCurrentStep to distinguish between clicks and internal changes
-  function setCurrentStep(stepIndex: number) {
-    setStepClickedFromBuilder(false)
-    setCurrentStepState(stepIndex)
   }
 
   // Handle panel resize (drag border to change width)
@@ -537,7 +525,7 @@ export default function ChoreoPage() {
                   onRemoveStep={removeStep}
                   onUndo={undo}
                   onRedo={redo}
-                  onJumpToStep={handleStepClick}
+                  onJumpToStep={setCurrentStep}
                   routineName={routineName}
                   setRoutineName={setRoutineName}
                   saveRoutine={saveRoutine}
@@ -559,7 +547,8 @@ export default function ChoreoPage() {
                   steps={routine}
                   currentStep={currentStep}
                   onStepChange={setCurrentStep}
-                  stepClickedFromBuilder={stepClickedFromBuilder}
+                  repeatMode={repeatMode}
+                  onRepeatModeChange={setRepeatMode}
                 />
               </div>
             </div>

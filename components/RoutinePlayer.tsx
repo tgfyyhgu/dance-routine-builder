@@ -5,45 +5,28 @@
 "use client"
 
 import { useState, useEffect, useRef, useId } from "react"
-import { RoutineStep } from "@/types/routine"
+import { RoutineStep, YTPlayer } from "@/types/routine"
 
 interface Props {
   readonly steps: RoutineStep[]
   readonly currentStep: number
   readonly onStepChange: (index: number, fromClick?: boolean) => void
-  readonly stepClickedFromBuilder?: boolean
+  readonly repeatMode?: 'repeat1' | 'repeatAll'
+  readonly onRepeatModeChange?: (mode: 'repeat1' | 'repeatAll') => void
 }
 
-declare global {
-  interface Window {
-    YT: {
-      Player: new (elementId: string, options: Record<string, unknown>) => YTPlayer
-      PlayerState: Record<string, number>
-    }
-    onYouTubeIframeAPIReady: () => void
-  }
-}
-
-interface YTPlayer {
-  playVideo: () => void
-  pauseVideo: () => void
-  seekTo: (seconds: number) => void
-  destroy: () => void
-  getCurrentTime: () => number
-}
-
-export default function RoutinePlayer({ steps, currentStep, onStepChange, stepClickedFromBuilder }: Props) {
-  const [autoplay, setAutoplay] = useState(false)
+export default function RoutinePlayer({ 
+  steps, 
+  currentStep, 
+  onStepChange,
+  repeatMode = 'repeatAll',
+  onRepeatModeChange
+}: Props) {
   const [playing, setPlaying] = useState(false)
+  const [playbackSpeed, setPlaybackSpeed] = useState(1)
   const playerRef = useRef<HTMLDivElement>(null)
   const playerInstanceRef = useRef<YTPlayer | null>(null)
-  const autoplayRef = useRef(false)
   const playerId = useId()
-
-  // Keep autoplayRef in sync with autoplay state
-  useEffect(() => {
-    autoplayRef.current = autoplay
-  }, [autoplay])
 
   const step = steps.length > 0 ? steps[currentStep] : null
 
@@ -90,22 +73,32 @@ export default function RoutinePlayer({ steps, currentStep, onStepChange, stepCl
       events: {
         onReady: () => {
           playerInstanceRef.current?.seekTo(startTime)
-          // If step was clicked from builder and autoplay is on, start playing
-          if (stepClickedFromBuilder && autoplay) {
-            playerInstanceRef.current?.playVideo()
-            setPlaying(true)
-          } else {
-            playerInstanceRef.current?.pauseVideo()
-            setPlaying(false)
-          }
+          // Clicking a step always pauses (manual override)
+          playerInstanceRef.current?.pauseVideo()
+          setPlaying(false)
         },
         onStateChange: (event: { data: number }) => {
           // 1 = playing, 2 = paused, 0 = ended
           setPlaying(event.data === 1)
 
-          // Auto-advance when video ends
-          if (event.data === 0 && autoplayRef.current && currentStep < steps.length - 1) {
-            onStepChange(currentStep + 1)
+          // Handle end-of-video based on repeat mode
+          if (event.data === 0) {
+            if (repeatMode === 'repeat1') {
+              // Repeat 1: Loop same video
+              const startTime = step?.figure.start_time || 0
+              playerInstanceRef.current?.seekTo(startTime)
+              playerInstanceRef.current?.pauseVideo()
+              setPlaying(false)
+            } else if (repeatMode === 'repeatAll') {
+              // Repeat All: Auto-advance to next (or loop to first)
+              if (currentStep < steps.length - 1) {
+                // Not at last step, go to next
+                onStepChange(currentStep + 1)
+              } else {
+                // At last step, loop back to first
+                onStepChange(0)
+              }
+            }
           }
         },
       },
@@ -114,22 +107,28 @@ export default function RoutinePlayer({ steps, currentStep, onStepChange, stepCl
     return () => {
       // Cleanup will happen when this effect runs again with new videoId
     }
-  }, [videoId, step?.figure.start_time, step?.figure.end_time, currentStep, steps.length, onStepChange, playerId, stepClickedFromBuilder, autoplay])
+  }, [videoId, step?.figure.start_time, step?.figure.end_time, currentStep, steps.length, onStepChange, playerId, repeatMode])
 
   function previous() {
     if (currentStep > 0) {
       onStepChange(currentStep - 1, false)
+      // Pause when manually navigating (user override)
+      if (playerInstanceRef.current) {
+        playerInstanceRef.current.pauseVideo()
+        setPlaying(false)
+      }
     }
   }
 
   function next() {
     if (currentStep < steps.length - 1) {
       onStepChange(currentStep + 1, false)
+      // Pause when manually navigating (user override)
+      if (playerInstanceRef.current) {
+        playerInstanceRef.current.pauseVideo()
+        setPlaying(false)
+      }
     }
-  }
-
-  function restart() {
-    onStepChange(0)
   }
 
   function togglePlay() {
@@ -145,13 +144,27 @@ export default function RoutinePlayer({ steps, currentStep, onStepChange, stepCl
     }
   }
 
-  function replayCurrent() {
+  function restartCurrentVideo() {
     if (!playerInstanceRef.current) return
 
     const startTime = step?.figure.start_time || 0
     playerInstanceRef.current.seekTo(startTime)
     playerInstanceRef.current.pauseVideo()
     setPlaying(false)
+  }
+
+  function restartRoutine() {
+    if (repeatMode === 'repeat1') {
+      // In Repeat 1 mode, restart current video
+      restartCurrentVideo()
+    } else {
+      // In Repeat All mode, go to first step
+      onStepChange(0)
+      if (playerInstanceRef.current) {
+        playerInstanceRef.current.pauseVideo()
+        setPlaying(false)
+      }
+    }
   }
 
   function toggleFullscreen() {
@@ -166,19 +179,8 @@ export default function RoutinePlayer({ steps, currentStep, onStepChange, stepCl
     }
   }
 
-  // Auto-advance after video duration (only if not manually navigated)
-  useEffect(() => {
-    if (!autoplay || !videoId || !step || currentStep >= steps.length - 1) return
-
-    const videoDuration = (step.figure.end_time || 0) - (step.figure.start_time || 0)
-    if (videoDuration <= 0) return
-
-    const timer = setTimeout(() => {
-      onStepChange(currentStep + 1, false)
-    }, videoDuration * 1000)
-
-    return () => clearTimeout(timer)
-  }, [currentStep, videoId, step, steps.length, autoplay, onStepChange])
+  // Auto-advance after video duration is handled by onStateChange callback based on repeat mode
+  // No need for separate timer
 
   if (steps.length === 0 || !step) return null
 
@@ -239,9 +241,9 @@ export default function RoutinePlayer({ steps, currentStep, onStepChange, stepCl
                 {playing ? "⏸ Pause" : "▶ Play"}
               </button>
               <button
-                onClick={replayCurrent}
+                onClick={restartRoutine}
                 className="flex-1 bg-gray-600 dark:bg-gray-700 text-white px-3 py-2 rounded hover:bg-gray-700 dark:hover:bg-gray-600 transition-colors text-sm"
-                title="Start from beginning"
+                title={repeatMode === 'repeat1' ? "Restart current video" : "Restart routine"}
               >
                 ↻ Restart
               </button>
@@ -266,15 +268,15 @@ export default function RoutinePlayer({ steps, currentStep, onStepChange, stepCl
                 →
               </button>
               <button
-                onClick={() => setAutoplay(!autoplay)}
+                onClick={() => onRepeatModeChange?.(repeatMode === 'repeat1' ? 'repeatAll' : 'repeat1')}
                 className={`flex-1 px-3 py-2 rounded transition-colors text-sm font-medium ${
-                  autoplay
-                    ? "bg-green-600 dark:bg-green-700 text-white hover:bg-green-700 dark:hover:bg-green-600"
-                    : "bg-gray-600 dark:bg-gray-700 text-white hover:bg-gray-700 dark:hover:bg-gray-600"
+                  repeatMode === 'repeat1'
+                    ? "bg-orange-600 dark:bg-orange-700 text-white hover:bg-orange-700 dark:hover:bg-orange-600"
+                    : "bg-purple-600 dark:bg-purple-700 text-white hover:bg-purple-700 dark:hover:bg-purple-600"
                 }`}
-                title="Toggle auto-advance"
+                title={repeatMode === 'repeat1' ? "Repeat 1 (loop current video)" : "Repeat All (auto-advance, loop routine)"}
               >
-                {autoplay ? "🔄 Auto" : "⏸ Manual"}
+                {repeatMode === 'repeat1' ? "🔁 Rep1" : "🔄 All"}
               </button>
               <button
                 onClick={toggleFullscreen}
@@ -283,6 +285,60 @@ export default function RoutinePlayer({ steps, currentStep, onStepChange, stepCl
               >
                 ⛶
               </button>
+            </div>
+
+            {/* Speed control */}
+            <div className="space-y-2">
+              <label className="text-xs font-medium text-gray-700 dark:text-gray-300 block">
+                Speed: {playbackSpeed.toFixed(1)}x
+              </label>
+              <input
+                type="range"
+                min="0.25"
+                max="2"
+                step="0.25"
+                value={playbackSpeed}
+                onChange={(e) => {
+                  const newSpeed = Number.parseFloat(e.target.value)
+                  setPlaybackSpeed(newSpeed)
+                  if (playerInstanceRef.current) {
+                    playerInstanceRef.current.setPlaybackRate(newSpeed)
+                  }
+                }}
+                className="w-full h-2 bg-gray-300 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer accent-blue-600 dark:accent-blue-500"
+                title="Adjust playback speed"
+              />
+              <div className="flex gap-1 text-xs">
+                <button
+                  onClick={() => {
+                    const newSpeed = Math.max(0.25, playbackSpeed - 0.25)
+                    setPlaybackSpeed(newSpeed)
+                    playerInstanceRef.current?.setPlaybackRate(newSpeed)
+                  }}
+                  className="flex-1 bg-gray-500 dark:bg-gray-700 text-white px-2 py-1 rounded hover:bg-gray-600 dark:hover:bg-gray-600"
+                >
+                  -
+                </button>
+                <button
+                  onClick={() => {
+                    setPlaybackSpeed(1)
+                    playerInstanceRef.current?.setPlaybackRate(1)
+                  }}
+                  className="flex-1 bg-gray-500 dark:bg-gray-700 text-white px-2 py-1 rounded hover:bg-gray-600 dark:hover:bg-gray-600"
+                >
+                  Reset
+                </button>
+                <button
+                  onClick={() => {
+                    const newSpeed = Math.min(2, playbackSpeed + 0.25)
+                    setPlaybackSpeed(newSpeed)
+                    playerInstanceRef.current?.setPlaybackRate(newSpeed)
+                  }}
+                  className="flex-1 bg-gray-500 dark:bg-gray-700 text-white px-2 py-1 rounded hover:bg-gray-600 dark:hover:bg-gray-600"
+                >
+                  +
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -324,10 +380,10 @@ export default function RoutinePlayer({ steps, currentStep, onStepChange, stepCl
                 →
               </button>
               <button
-                onClick={() => onStepChange(0, false)}
+                onClick={restartRoutine}
                 className="flex-1 px-3 py-2 bg-gray-600 dark:bg-gray-700 text-white rounded hover:bg-gray-700 dark:hover:bg-gray-600 transition-colors text-sm disabled:opacity-50"
-                disabled={currentStep === 0}
-                title="Go to first step"
+                disabled={repeatMode === 'repeat1' || currentStep === 0}
+                title={repeatMode === 'repeat1' ? "Restart current video" : "Restart routine"}
               >
                 ↻ Restart
               </button>
