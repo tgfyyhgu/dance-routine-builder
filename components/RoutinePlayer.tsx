@@ -23,7 +23,6 @@ export default function RoutinePlayer({
   onRepeatModeChange
 }: Props) {
   const [playing, setPlaying] = useState(false)
-  const [playbackSpeed, setPlaybackSpeed] = useState(1)
   const playerRef = useRef<HTMLDivElement>(null)
   const playerInstanceRef = useRef<YTPlayer | null>(null)
   const autoAdvancingRef = useRef(false)
@@ -293,60 +292,6 @@ export default function RoutinePlayer({
               >
                 ⛶
               </button>
-            </div>
-
-            {/* Speed control */}
-            <div className="space-y-2">
-              <label className="text-xs font-medium text-gray-700 dark:text-gray-300 block">
-                Speed: {playbackSpeed.toFixed(1)}x
-              </label>
-              <input
-                type="range"
-                min="0.25"
-                max="2"
-                step="0.25"
-                value={playbackSpeed}
-                onChange={(e) => {
-                  const newSpeed = Number.parseFloat(e.target.value)
-                  setPlaybackSpeed(newSpeed)
-                  if (playerInstanceRef.current) {
-                    playerInstanceRef.current.setPlaybackRate(newSpeed)
-                  }
-                }}
-                className="w-full h-2 bg-gray-300 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer accent-blue-600 dark:accent-blue-500"
-                title="Adjust playback speed"
-              />
-              <div className="flex gap-1 text-xs">
-                <button
-                  onClick={() => {
-                    const newSpeed = Math.max(0.25, playbackSpeed - 0.25)
-                    setPlaybackSpeed(newSpeed)
-                    playerInstanceRef.current?.setPlaybackRate(newSpeed)
-                  }}
-                  className="flex-1 bg-gray-500 dark:bg-gray-700 text-white px-2 py-1 rounded hover:bg-gray-600 dark:hover:bg-gray-600"
-                >
-                  -
-                </button>
-                <button
-                  onClick={() => {
-                    setPlaybackSpeed(1)
-                    playerInstanceRef.current?.setPlaybackRate(1)
-                  }}
-                  className="flex-1 bg-gray-500 dark:bg-gray-700 text-white px-2 py-1 rounded hover:bg-gray-600 dark:hover:bg-gray-600"
-                >
-                  Reset
-                </button>
-                <button
-                  onClick={() => {
-                    const newSpeed = Math.min(2, playbackSpeed + 0.25)
-                    setPlaybackSpeed(newSpeed)
-                    playerInstanceRef.current?.setPlaybackRate(newSpeed)
-                  }}
-                  className="flex-1 bg-gray-500 dark:bg-gray-700 text-white px-2 py-1 rounded hover:bg-gray-600 dark:hover:bg-gray-600"
-                >
-                  +
-                </button>
-              </div>
             </div>
           </div>
         </div>
