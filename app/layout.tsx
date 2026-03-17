@@ -18,7 +18,7 @@ function Navigation() {
   if (loading) return null
 
   return (
-    <nav className="sticky top-0 z-50 p-4 border-b flex justify-between items-center bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm">
+    <nav className="p-4 border-b flex justify-between items-center bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm flex-shrink-0">
       <Link href="/" className="font-bold text-lg">
         Dance Routine Builder
       </Link>
@@ -55,12 +55,14 @@ export default function RootLayout({children,}: {
   readonly children: React.ReactNode
 }) {
   return (
-    <html lang="en">
-      <body className="bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100">
+    <html lang="en" className="h-full">
+      <body className="h-full flex flex-col bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100">
         <ThemeProvider>
           <AuthProvider>
             <Navigation />
-            {children}
+            <div className="flex-1 overflow-y-auto">
+              {children}
+            </div>
           </AuthProvider>
         </ThemeProvider>
       </body>
