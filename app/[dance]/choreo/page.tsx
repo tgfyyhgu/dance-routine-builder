@@ -151,6 +151,27 @@ export default function ChoreoPage() {
     return () => globalThis.removeEventListener("beforeunload", handleBeforeUnload)
   }, [hasUnsavedChanges])
 
+  // Keyboard shortcuts: Ctrl+Z (undo), Ctrl+Shift+Z (redo)
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      // Check if Ctrl (or Cmd on Mac) is pressed
+      const isMod = e.ctrlKey || e.metaKey
+      
+      if (isMod && e.key === 'z' && !e.shiftKey) {
+        // Ctrl+Z or Cmd+Z: Undo
+        e.preventDefault()
+        undo()
+      } else if (isMod && (e.key === 'z' && e.shiftKey || e.key === 'y')) {
+        // Ctrl+Shift+Z or Ctrl+Y: Redo
+        e.preventDefault()
+        redo()
+      }
+    }
+    
+    globalThis.addEventListener("keydown", handleKeyDown)
+    return () => globalThis.removeEventListener("keydown", handleKeyDown)
+  }, [history, future, routine])
+
   // Undo/redo: Save state before change, clear redo stack
   function pushHistory(newState: RoutineStep[]) {
     setHistory(prev => [...prev, routine])
