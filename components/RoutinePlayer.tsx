@@ -88,8 +88,9 @@ export default function RoutinePlayer({
       playerVars: {
         controls: 0,
         autoplay: 0,
-        // Don't set start/end here - we handle it manually in onReady
-        // Having both playerVars AND seekTo can cause conflicts
+        end: endTime,
+        // Don't set start here - we handle it manually in onReady with seekTo
+        // But end can stay - it just tells YouTube when to auto-stop the video
       },
       events: {
         onReady: () => {
