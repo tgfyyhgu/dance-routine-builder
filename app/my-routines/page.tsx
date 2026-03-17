@@ -5,6 +5,7 @@ import Link from "next/link"
 import { supabase } from "@/lib/supabaseClient"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/lib/AuthContext"
+import { generateShareToken, generateShareUrl, copyToClipboard } from "@/lib/sharing"
 
 interface SavedRoutine {
   id: string
@@ -12,6 +13,7 @@ interface SavedRoutine {
   dance_style: string
   created_at: string
   steps: unknown[]
+  shared_token?: string
 }
 
 export default function MyRoutinesPage() {
@@ -21,6 +23,8 @@ export default function MyRoutinesPage() {
   const [loading, setLoading] = useState(true)
   const [groupedByDance, setGroupedByDance] = useState<Record<string, SavedRoutine[]>>({})
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
+  const [shareModal, setShareModal] = useState<{ id: string; url: string } | null>(null)
+  const [shareLoading, setShareLoading] = useState(false)
 
   useEffect(() => {
     // Don't load routines until we know if user is authenticated
@@ -125,6 +129,7 @@ export default function MyRoutinesPage() {
           dance_style: routine.dance_style,
           steps: routine.steps,
           created_at: new Date().toISOString(),
+          user_id: user?.id,
         },
       ])
 
@@ -153,6 +158,67 @@ export default function MyRoutinesPage() {
     } catch (error) {
       console.error("Error duplicating routine:", error)
       alert("Error duplicating routine")
+    }
+  }
+
+  async function shareRoutine(routine: SavedRoutine) {
+    setShareLoading(true)
+    
+    try {
+      // If already shared, just show the existing share URL
+      if (routine.shared_token) {
+        const url = generateShareUrl(routine.shared_token)
+        setShareModal({ id: routine.id, url })
+        setShareLoading(false)
+        return
+      }
+
+      // Generate new share token
+      const token = generateShareToken()
+      
+      // Update routine with share token
+      const { error } = await supabase
+        .from("routines")
+        .update({ shared_token: token })
+        .eq("id", routine.id)
+
+      if (error) {
+        console.error("Error sharing routine:", error)
+        alert("Failed to share routine: " + error.message)
+        setShareLoading(false)
+        return
+      }
+
+      // Update local state
+      const updated = routines.map(r => 
+        r.id === routine.id ? { ...r, shared_token: token } : r
+      )
+      setRoutines(updated)
+      
+      // Update grouped state
+      const newGrouped = { ...groupedByDance }
+      for (const style in newGrouped) {
+        newGrouped[style] = newGrouped[style].map(r =>
+          r.id === routine.id ? { ...r, shared_token: token } : r
+        )
+      }
+      setGroupedByDance(newGrouped)
+
+      // Show share modal
+      const url = generateShareUrl(token)
+      setShareModal({ id: routine.id, url })
+    } finally {
+      setShareLoading(false)
+    }
+  }
+
+  async function copyShareLink() {
+    if (!shareModal) return
+    const copied = await copyToClipboard(shareModal.url)
+    if (copied) {
+      alert('Share link copied to clipboard!')
+    } else {
+      alert('Failed to copy link')
     }
   }
 
@@ -237,6 +303,13 @@ export default function MyRoutinesPage() {
                               📋 Copy
                             </button>
                             <button
+                              onClick={() => shareRoutine(routine)}
+                              disabled={shareLoading}
+                              className="inline-block bg-indigo-500 text-white px-3 py-1 rounded hover:bg-indigo-600 disabled:opacity-50 transition-colors text-sm font-medium"
+                            >
+                              🔗 Share
+                            </button>
+                            <button
                               onClick={() => setDeleteConfirm(routine.id)}
                               className="inline-block bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 transition-colors text-sm font-medium"
                             >
@@ -253,6 +326,35 @@ export default function MyRoutinesPage() {
           </div>
         )}
       </div>
+
+      {/* Share Modal */}
+      {shareModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-6 max-w-sm dark:text-white">
+            <h3 className="text-xl font-bold mb-4">Share Routine</h3>
+            <p className="text-gray-600 dark:text-gray-400 mb-4">
+              Your routine is now shareable! Copy the link below to share with coaches or dance partners.
+            </p>
+            <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded mb-4 break-all text-sm font-mono">
+              {shareModal.url}
+            </div>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setShareModal(null)}
+                className="px-4 py-2 bg-gray-300 dark:bg-gray-700 text-gray-800 dark:text-white rounded hover:bg-gray-400 dark:hover:bg-gray-600 transition-colors font-medium"
+              >
+                Close
+              </button>
+              <button
+                onClick={copyShareLink}
+                className="px-4 py-2 bg-indigo-500 text-white rounded hover:bg-indigo-600 transition-colors font-medium"
+              >
+                📋 Copy Link
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Delete Confirmation Modal */}
       {deleteConfirm && (
