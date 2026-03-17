@@ -230,14 +230,23 @@ export default function RoutinePlayer({
   }
 
   function toggleFullscreen() {
-    if (!playerRef.current) return
+    if (!playerRef.current) {
+      console.error('[RoutinePlayer] playerRef not available for fullscreen')
+      return
+    }
 
-    if (document.fullscreenElement) {
-      document.exitFullscreen()
-    } else {
-      playerRef.current.requestFullscreen().catch((err) => {
-        console.error(`Error attempting to enable fullscreen:`, err)
-      })
+    try {
+      if (document.fullscreenElement) {
+        document.exitFullscreen().catch((err) => {
+          console.error(`[RoutinePlayer] Error exiting fullscreen:`, err)
+        })
+      } else {
+        playerRef.current.requestFullscreen().catch((err) => {
+          console.error(`[RoutinePlayer] Error requesting fullscreen:`, err)
+        })
+      }
+    } catch (err) {
+      console.error(`[RoutinePlayer] Fullscreen error:`, err)
     }
   }
 
@@ -363,8 +372,15 @@ export default function RoutinePlayer({
                 onChange={(e) => {
                   const newSpeed = Number.parseFloat(e.target.value)
                   setPlaybackSpeed(newSpeed)
-                  if (playerInstanceRef.current) {
-                    playerInstanceRef.current.setPlaybackRate(newSpeed)
+                  if (playerInstanceRef.current?.setPlaybackRate) {
+                    try {
+                      playerInstanceRef.current.setPlaybackRate(newSpeed)
+                      console.log(`[RoutinePlayer] Speed changed to ${newSpeed}x`)
+                    } catch (err) {
+                      console.error(`[RoutinePlayer] Failed to set playback rate:`, err)
+                    }
+                  } else {
+                    console.warn(`[RoutinePlayer] setPlaybackRate not available on player`)
                   }
                 }}
                 className="w-full h-2 bg-gray-300 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer accent-blue-600 dark:accent-blue-500"
@@ -375,7 +391,11 @@ export default function RoutinePlayer({
                   onClick={() => {
                     const newSpeed = Math.max(0.25, playbackSpeed - 0.25)
                     setPlaybackSpeed(newSpeed)
-                    playerInstanceRef.current?.setPlaybackRate(newSpeed)
+                    try {
+                      playerInstanceRef.current?.setPlaybackRate(newSpeed)
+                    } catch (err) {
+                      console.error('[RoutinePlayer] Failed to set speed:', err)
+                    }
                   }}
                   className="flex-1 bg-gray-500 dark:bg-gray-700 text-white px-2 py-1 rounded hover:bg-gray-600 dark:hover:bg-gray-600"
                 >
@@ -384,7 +404,11 @@ export default function RoutinePlayer({
                 <button
                   onClick={() => {
                     setPlaybackSpeed(1)
-                    playerInstanceRef.current?.setPlaybackRate(1)
+                    try {
+                      playerInstanceRef.current?.setPlaybackRate(1)
+                    } catch (err) {
+                      console.error('[RoutinePlayer] Failed to reset speed:', err)
+                    }
                   }}
                   className="flex-1 bg-gray-500 dark:bg-gray-700 text-white px-2 py-1 rounded hover:bg-gray-600 dark:hover:bg-gray-600"
                 >
@@ -394,7 +418,11 @@ export default function RoutinePlayer({
                   onClick={() => {
                     const newSpeed = Math.min(2, playbackSpeed + 0.25)
                     setPlaybackSpeed(newSpeed)
-                    playerInstanceRef.current?.setPlaybackRate(newSpeed)
+                    try {
+                      playerInstanceRef.current?.setPlaybackRate(newSpeed)
+                    } catch (err) {
+                      console.error('[RoutinePlayer] Failed to set speed:', err)
+                    }
                   }}
                   className="flex-1 bg-gray-500 dark:bg-gray-700 text-white px-2 py-1 rounded hover:bg-gray-600 dark:hover:bg-gray-600"
                 >
