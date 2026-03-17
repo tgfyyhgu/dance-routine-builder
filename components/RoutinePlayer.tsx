@@ -89,6 +89,8 @@ export default function RoutinePlayer({ steps, currentStep, onStepChange }: Prop
       events: {
         onReady: () => {
           playerInstanceRef.current?.seekTo(startTime)
+          playerInstanceRef.current?.pauseVideo()
+          setPlaying(false)
         },
         onStateChange: (event: { data: number }) => {
           // 1 = playing, 2 = paused, 0 = ended
