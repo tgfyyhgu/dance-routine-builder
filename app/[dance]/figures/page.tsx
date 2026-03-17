@@ -18,6 +18,21 @@ interface Figure {
   dance_style: string
 }
 
+// Helper function to clean YouTube URLs by removing playlist parameters
+function cleanYouTubeUrl(url: string): string {
+  if (!url) return url
+  
+  // Extract video ID using the same regex as RoutinePlayer
+  const regExp = /^.*(?:youtu\.be\/|watch\?v=)([^#&?]*).*/
+  const videoId = regExp.exec(url)?.[1]
+  
+  // If we found a video ID, return clean URL; otherwise return original
+  if (videoId) {
+    return `https://www.youtube.com/watch?v=${videoId}`
+  }
+  return url
+}
+
 export default function FiguresPage() {
   const params = useParams()
   const dance = params.dance as string
@@ -34,7 +49,12 @@ export default function FiguresPage() {
         .eq("dance_style", dance)
 
       if (data) {
-        setFigures(data)
+        // Clean YouTube URLs for all figures (handles old figures with playlist params)
+        const cleanedData = data.map(fig => ({
+          ...fig,
+          youtube_url: cleanYouTubeUrl(fig.youtube_url)
+        }))
+        setFigures(cleanedData)
       }
     }
     loadFigures()
@@ -100,6 +120,8 @@ export default function FiguresPage() {
 
       // UPDATE and INSERT
       for (const fig of editedFigures) {
+        // Clean YouTube URL before saving (removes playlist parameters that prevent embedding)
+        const cleanUrl = cleanYouTubeUrl(fig.youtube_url)
 
         if (originalIds.includes(fig.id)) {
 
@@ -110,7 +132,7 @@ export default function FiguresPage() {
               name: fig.name,
               difficulty: fig.difficulty,
               note: fig.note,
-              youtube_url: fig.youtube_url,
+              youtube_url: cleanUrl,
               start_time: fig.start_time,
               end_time: fig.end_time
             })
@@ -132,7 +154,7 @@ export default function FiguresPage() {
               name: fig.name,
               difficulty: fig.difficulty,
               note: fig.note,
-              youtube_url: fig.youtube_url,
+              youtube_url: cleanUrl,
               start_time: fig.start_time,
               end_time: fig.end_time,
               dance_style: dance
