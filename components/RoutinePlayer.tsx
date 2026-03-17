@@ -160,11 +160,18 @@ export default function RoutinePlayer({
 
     const endTime = step.figure.end_time
     const interval = setInterval(() => {
-      const currentTime = playerInstanceRef.current?.getCurrentTime()
-      if (currentTime !== undefined && currentTime >= endTime) {
-        playerInstanceRef.current?.pauseVideo()
-        setPlaying(false)
-        console.log(`[RoutinePlayer] Paused at end time ${endTime}s`)
+      try {
+        // Guard: check if method exists before calling
+        if (!playerInstanceRef.current?.getCurrentTime) return
+        
+        const currentTime = playerInstanceRef.current.getCurrentTime()
+        if (typeof currentTime === 'number' && currentTime >= endTime) {
+          playerInstanceRef.current?.pauseVideo()
+          setPlaying(false)
+          console.log(`[RoutinePlayer] Paused at end time ${endTime}s`)
+        }
+      } catch (err) {
+        // Silently ignore errors (player might be initializing or destroyed)
       }
     }, 100) // Check every 100ms
 
@@ -231,22 +238,30 @@ export default function RoutinePlayer({
 
   function toggleFullscreen() {
     if (!playerRef.current) {
-      console.error('[RoutinePlayer] playerRef not available for fullscreen')
+      console.warn('[RoutinePlayer] Cannot fullscreen: playerRef is not available')
+      return
+    }
+
+    // Check if the element is still connected to the DOM
+    if (!playerRef.current.isConnected) {
+      console.warn('[RoutinePlayer] Cannot fullscreen: element is not connected to DOM')
       return
     }
 
     try {
       if (document.fullscreenElement) {
         document.exitFullscreen().catch((err) => {
-          console.error(`[RoutinePlayer] Error exiting fullscreen:`, err)
+          console.warn(`[RoutinePlayer] Could not exit fullscreen: ${(err as Error).message}`)
         })
       } else {
-        playerRef.current.requestFullscreen().catch((err) => {
-          console.error(`[RoutinePlayer] Error requesting fullscreen:`, err)
+        // Request fullscreen on the player container
+        playerRef.current.requestFullscreen({ navigationUI: 'hide' }).catch((err) => {
+          console.warn(`[RoutinePlayer] Fullscreen not available: ${(err as Error).message}`)
+          // Common reasons: browser policy, user gesture required, element not in focus
         })
       }
     } catch (err) {
-      console.error(`[RoutinePlayer] Fullscreen error:`, err)
+      console.warn(`[RoutinePlayer] Fullscreen error: ${(err as Error).message}`)
     }
   }
 
@@ -372,15 +387,26 @@ export default function RoutinePlayer({
                 onChange={(e) => {
                   const newSpeed = Number.parseFloat(e.target.value)
                   setPlaybackSpeed(newSpeed)
-                  if (playerInstanceRef.current?.setPlaybackRate) {
-                    try {
-                      playerInstanceRef.current.setPlaybackRate(newSpeed)
-                      console.log(`[RoutinePlayer] Speed changed to ${newSpeed}x`)
-                    } catch (err) {
-                      console.error(`[RoutinePlayer] Failed to set playback rate:`, err)
-                    }
-                  } else {
-                    console.warn(`[RoutinePlayer] setPlaybackRate not available on player`)
+                  
+                  if (!playerInstanceRef.current) {
+                    console.warn(`[RoutinePlayer] Player instance not available`)
+                    return
+                  }
+                  
+                  if (!playerInstanceRef.current.setPlaybackRate) {
+                    console.warn(`[RoutinePlayer] setPlaybackRate method not available on player`)
+                    return
+                  }
+                  
+                  try {
+                    // Get current player state to diagnose
+                    const currentTime = playerInstanceRef.current.getCurrentTime?.() ?? 'unknown'
+                    console.log(`[RoutinePlayer] Attempting speed change to ${newSpeed}x (current time: ${currentTime}s)`)
+                    
+                    playerInstanceRef.current.setPlaybackRate(newSpeed)
+                    console.log(`[RoutinePlayer] Speed set to ${newSpeed}x - check video playback`)
+                  } catch (err) {
+                    console.error(`[RoutinePlayer] Failed to set playback rate:`, (err as Error).message)
                   }
                 }}
                 className="w-full h-2 bg-gray-300 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer accent-blue-600 dark:accent-blue-500"
