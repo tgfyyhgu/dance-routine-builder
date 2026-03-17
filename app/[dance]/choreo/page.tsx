@@ -11,7 +11,7 @@ import { useEffect, useState, useRef } from "react"
 import { useParams, useSearchParams } from "next/navigation"
 import Link from "next/link"
 // Drag & drop
-import { DndContext, DragEndEvent, pointerWithin } from "@dnd-kit/core"
+import { DndContext, DragEndEvent, pointerWithin, useSensor, useSensors, MouseSensor, TouchSensor } from "@dnd-kit/core"
 // Database
 import { supabase } from "@/lib/supabaseClient"
 import { useAuth } from "@/lib/AuthContext"
@@ -469,8 +469,28 @@ export default function ChoreoPage() {
     }
   }
 
+  // Configure dnd-kit sensors to require 5px drag before activation
+  // This lets clicks on buttons pass through without triggering drag
+  const sensors = useSensors(
+    useSensor(MouseSensor, {
+      activationConstraint: {
+        distance: 5,
+      },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        distance: 5,
+      },
+    })
+  )
+
   return (
-    <DndContext collisionDetection={pointerWithin} onDragEnd={handleDragEnd}>
+    <DndContext 
+      collisionDetection={pointerWithin} 
+      onDragEnd={handleDragEnd}
+      sensors={sensors}
+      autoScroll={false}
+    >
       <div className="flex flex-col bg-white dark:bg-gray-950">
         {/* Header */}
         <div className="border-b dark:border-gray-800 bg-white dark:bg-gray-900 px-6 py-3">
