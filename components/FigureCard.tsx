@@ -1,8 +1,10 @@
-/*
-  The FigureCard component is designed to display information about a specific figure, including its name, difficulty, notes, and an optional YouTube video preview. 
-  It accepts several props to manage the figure's data and the state of the video preview. 
-  The component extracts the YouTube video ID from the provided URL and conditionally renders an embedded video player when the preview is toggled on.
-*/
+/**
+ * PHASE 6: FIGURE CARD COMPONENT
+ * 
+ * FILE PURPOSE: FigureCard is a TABLE ROW component for the Figures management page.
+ * High-level role: Display one figure with metadata and optional video preview.
+ * Used in: /[dance]/figures page to view/edit all figures for a dance style.
+ */
 
 import { useState, useEffect } from "react"
 import React from 'react';
@@ -34,7 +36,7 @@ type Props = {
   /* Props for the FigureCard component 
   - figureId: A unique identifier for the figure, used to manage video preview state.
   - name: The name of the figure to be displayed.
-  - difficulty: An optional number representing the difficulty level of the figure.
+  - difficulty: A number (0-5) representing the difficulty level of the figure.
   - note: An optional string for additional notes about the figure.
   - youtube_url: An optional string containing the URL of a YouTube video related to the figure.
   - start_time: An optional number indicating the start time (in seconds) for the video preview.
@@ -44,7 +46,7 @@ type Props = {
   */
   readonly figureId: string
   readonly name: string
-  readonly difficulty?: number
+  readonly difficulty: number
   readonly note?: string
   readonly youtube_url?: string;
   readonly start_time?: number | null;
@@ -72,55 +74,51 @@ export default function FigureCard(
   }
 
   return (
-    // The component returns a fragment containing a table row with the figure's information and a conditional row for the video preview.
-    <>
-      <tr className="border-b">
-        
-        <td className="p-2 font-semibold">
-          {name}
-        </td>
-
-        <td className="p-2">
-          {difficulty}
-        </td>
-
-        <td className="p-2 text-gray-600">
-          {note}
-        </td>
-
-        <td className="p-2">
-          {videoId && (
-            <button
-              className="text-blue-600 underline"
-              onClick={() => toggleVideo(figureId)}
-            >
-              {videoVisible ? "Collapse" : "View"}
-            </button>
-          )}
-        </td>
-
-      </tr>
+    // The component returns a table row with the figure's information and video player side-by-side when opened
+    
+    <tr 
+      className="border-b cursor-pointer hover:bg-gray-50 transition-colors"
+      onClick={() => toggleVideo(figureId)}
+    >
       
+      <td className="p-2 font-semibold text-sm">
+        {name}
+      </td>
+
+      <td className="p-2 text-xs">
+        {difficulty === 0 ? (
+          <span className="text-gray-400 text-xs">Not rated</span>
+        ) : (
+          <span className="text-yellow-600">
+            {'★'.repeat(difficulty)}{'☆'.repeat(5 - difficulty)}
+          </span>
+        )}
+      </td>
+
+      <td className="p-2 text-gray-600 text-xs max-w-xs overflow-auto">
+        {note}
+      </td>
+
+      <td className="p-2 text-center text-xs">
+        {videoId && (
+          <span className="text-blue-600 text-xs">
+            {videoVisible ? "▶" : "▼"}
+          </span>
+        )}
+      </td>
+
       {videoVisible && videoId && (
-
-        <tr className="bg-gray-50">
-          <td colSpan={4} className="p-4">
-
-            <iframe
-              width="420"
-              height="240"
-              title={`${figureId} - YouTube video`}
-              src={`https://www.youtube.com/embed/${videoId}?start=${start_time || 0}&end=${end_time || ""}`}
-              allowFullScreen
-            />
-
-          </td>
-
-        </tr>
-
+        <td className="p-4">
+          <iframe
+            width="560"
+            height="315"
+            title={`${figureId} - YouTube video`}
+            src={`https://www.youtube.com/embed/${videoId}?start=${start_time || 0}&end=${end_time || ""}`}
+            allowFullScreen
+          />
+        </td>
       )}
 
-    </>
-
+    </tr>
   )
 }

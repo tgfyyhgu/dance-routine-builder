@@ -27,6 +27,15 @@ export default function HomePage() {
         Select a dance style
       </p>
 
+      <div className="mb-8">
+        <Link
+          href="/my-routines"
+          className="inline-block bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition-colors font-semibold"
+        >
+          📚 My Routines
+        </Link>
+      </div>
+
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 w-full max-w-4xl">
 
         {dances.map((dance) => (

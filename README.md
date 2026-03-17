@@ -37,12 +37,153 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 
 ## Project Overview
 
-**Dance Routine Builder** is a web application for managing and organizing dance figures and routines. Built with Next.js and Supabase, it allows users to:
+**Ballroom Dance Routine Builder** is a comprehensive web application that helps choreographers and dancers create, manage, and practice ballroom dance routines. It supports 10 dance styles: Waltz, Tango, Viennese, Foxtrot, Quickstep, Cha-cha, Samba, Rumba, Paso Doble, and Jive.
 
-- **Browse Dance Figures**: View a comprehensive list of figures for different dance styles
-- **Search & Filter**: Find specific figures by name, notes, or difficulty level (1-5 scale)
-- **Watch Video References**: Preview YouTube videos for each figure with customizable start/end times
-- **Manage Figures**: Add, edit, and delete figures in an admin interface
-- **Persistent Storage**: All data is stored in Supabase for reliable access
+## Key Features
 
-The application uses a modular component structure with a `FigureCard` component for displaying individual figures and their video previews. The figures page allows choreographers and dancers to organize routines efficiently.
+### Figure Management
+- Add, edit, and delete dance figures with detailed metadata
+- Difficulty ratings (0-5 stars)
+- YouTube video references with customizable start/end times
+- Notes and descriptions for each figure
+- Search and filter by name, difficulty, or notes
+
+### Choreography Builder
+- Drag-and-drop interface to create routines
+- Reorder steps easily
+- Undo/redo functionality for editing
+- Visual preview of each step with YouTube videos
+- Real-time routine composition
+
+### Routine Player
+- Embedded YouTube player for each figure in the routine
+- Auto-play mode for continuous learning
+- Manual playback controls (play, pause, replay)
+- Fullscreen video support
+- Progress bar showing routine progress
+- Step-by-step navigation
+
+### Routine Management
+- Save routines to Supabase database
+- Export routines as JSON files
+- Import previously saved routines
+- "Save As" feature for duplicating routines
+- Unsaved changes warnings
+
+### My Routines Page
+- View and manage all saved routines
+- Organized by dance style
+- Quick access to edit, delete, or export routines
+
+## Technology Stack
+
+### Frontend
+- **Next.js 16.1.6** - React framework with App Router
+- **React 19.2.3** - UI library
+- **TypeScript** - Type-safe development
+- **Tailwind CSS 4** - Utility-first styling
+
+### Libraries & Dependencies
+- `@dnd-kit/*` - Drag-and-drop library for routine reordering
+- `supabase-js` - Backend database client
+- `uuid` - Unique identifier generation
+- `file-saver` - File export/download functionality
+
+### Backend
+- **Supabase** - PostgreSQL database with authentication ready
+- YouTube IFrame API for video embedding
+
+## Data Models
+
+### Figure
+```typescript
+{
+  id: string
+  name: string
+  difficulty: number (0-5)
+  note: string
+  youtube_url: string
+  start_time: number (seconds)
+  end_time: number (seconds)
+  dance_style: string
+}
+```
+
+### RoutineStep
+```typescript
+{
+  stepId: string
+  figure: Figure
+}
+```
+
+### Routine
+```typescript
+{
+  id: string
+  name: string
+  dance_style: string
+  created_at: string
+  steps: RoutineStep[]
+}
+```
+
+## Project Structure
+
+```
+/app
+  /[dance]
+    /choreo/page.tsx          # Choreography builder
+    /figures/page.tsx         # Figure management
+  /my-routines/page.tsx       # Saved routines list
+  /login/page.tsx             # Authentication (prepared)
+  /signup/page.tsx            # Registration (prepared)
+  page.tsx                    # Home page
+  layout.tsx                  # Root layout
+
+/components
+  RoutineBuilder.tsx          # Drag-drop list with undo/redo
+  RoutinePlayer.tsx           # Video player with controls
+  FigurePanel.tsx             # Left panel with figure list
+  FigureCard.tsx              # Individual figure display
+  SavedRoutinesPanel.tsx      # Routines management
+
+/lib
+  supabaseClient.ts           # Supabase initialization
+  routineExport.ts            # JSON export logic
+  routineImport.ts            # JSON import logic
+  timeUtils.ts                # Time formatting utilities
+  auth.ts                     # Authentication logic (prepared)
+
+/types
+  routine.ts                  # TypeScript interfaces
+
+/public                       # Static assets
+```
+
+## Key Components
+
+| Component | Purpose |
+|-----------|---------|
+| **RoutineBuilder** | Sortable list of routine steps with drag-drop reordering, undo/redo controls |
+| **RoutinePlayer** | YouTube video player with playback controls, auto-advance, fullscreen |
+| **FigurePanel** | Left sidebar with draggable figures filtered by dance style |
+| **FigureCard** | Table row component showing figure details and video preview toggle |
+
+## Routes
+
+| Route | Purpose |
+|-------|---------|
+| `/` | Home page with dance style selection |
+| `/[dance]/figures` | Figure management interface (admin view) |
+| `/[dance]/choreo` | Choreography builder and routine player |
+| `/my-routines` | View, edit, and manage saved routines |
+| `/login` | User login (prepared for implementation) |
+| `/signup` | User registration (prepared for implementation) |
+
+## Database Tables
+
+- **figures** - Dance figures with metadata (name, difficulty, video URL, timing, notes)
+- **routines** - Saved user routines (name, dance style, steps, timestamp)
+
+*Note: Ready for `user_id` field integration for multi-user support*
