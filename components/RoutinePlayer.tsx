@@ -87,16 +87,19 @@ export default function RoutinePlayer({
       height: "100%",
       playerVars: {
         controls: 0,
-        start: startTime,
-        end: endTime,
         autoplay: 0,
+        // Don't set start/end here - we handle it manually in onReady
+        // Having both playerVars AND seekTo can cause conflicts
       },
       events: {
         onReady: () => {
-          console.log(`[RoutinePlayer] onReady for ${step?.figure.name} (${videoId})`)
-          // Just seek to start time and let YouTube settle like FigurePanel does
-          // Don't call playVideo here - it causes issues with some videos
-          playerInstanceRef.current?.seekTo(startTime)
+          console.log(`[RoutinePlayer] onReady for ${step?.figure.name} (${videoId}), seeking to ${startTime}s, end at ${endTime}s`)
+          try {
+            playerInstanceRef.current?.seekTo(startTime)
+            console.log(`[RoutinePlayer] seekTo completed successfully`)
+          } catch (e) {
+            console.error(`[RoutinePlayer] seekTo failed:`, e)
+          }
         },
         onError: (event: { data: number }) => {
           // 2 = invalid video ID, 5 = HTML5 player error, 100 = video not found, 101 = video not allowed to be played embedded, 150 = same as 101
@@ -110,7 +113,9 @@ export default function RoutinePlayer({
           console.error(`[RoutinePlayer] YouTube Error for ${step?.figure.name} (${videoId}): ${errorCodes[event.data] || `Unknown error ${event.data}`}`)
         },
         onStateChange: (event: { data: number }) => {
-          // 1 = playing, 2 = paused, 0 = ended
+          // -1 = unstarted, 0 = ended, 1 = playing, 2 = paused, 3 = buffering, 5 = cued/ready
+          const stateNames: { [key: number]: string } = { '-1': 'unstarted', '0': 'ended', '1': 'playing', '2': 'paused', '3': 'buffering', '5': 'cued' }
+          console.log(`[RoutinePlayer] onStateChange for ${step?.figure.name}: ${stateNames[event.data] || event.data}`)
           setPlaying(event.data === 1)
           
           // Handle auto-play for Repeat All right after video is ready to play
