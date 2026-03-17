@@ -3,12 +3,11 @@
 import "./globals.css"
 import Link from "next/link"
 import { AuthProvider, useAuth } from "@/lib/AuthContext"
-import { ThemeProvider, useTheme } from "@/lib/ThemeContext"
+import { ThemeProvider } from "@/lib/ThemeContext"
 import { useRouter } from "next/navigation"
 
 function Navigation() {
   const { user, signOut, loading } = useAuth()
-  const { isDark, toggleTheme } = useTheme()
   const router = useRouter()
 
   const handleLogout = async () => {
@@ -31,32 +30,18 @@ function Navigation() {
             <Link href="/my-routines" className="hover:text-blue-500 dark:hover:text-blue-400">My Routines</Link>
             <span className="text-sm text-gray-600 dark:text-gray-400">{user.email}</span>
             <button
-              onClick={toggleTheme}
-              className="px-3 py-1 rounded text-sm bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
-              title={isDark ? "Light mode" : "Dark mode"}
-            >
-              {isDark ? '☀️' : '🌙'}
-            </button>
-            <button
               onClick={handleLogout}
-              className="bg-red-500 text-white px-3 py-1 rounded text-sm hover:bg-red-600"
+              className="bg-red-500 dark:bg-red-700 text-white px-3 py-1 rounded text-sm hover:bg-red-600 dark:hover:bg-red-600"
             >
               Logout
             </button>
           </>
         ) : (
           <>
-            <button
-              onClick={toggleTheme}
-              className="px-3 py-1 rounded text-sm bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
-              title={isDark ? "Light mode" : "Dark mode"}
-            >
-              {isDark ? '☀️' : '🌙'}
-            </button>
-            <Link href="/login" className="text-blue-500 hover:underline dark:text-blue-400">
+            <Link href="/login" className="text-blue-500 dark:text-blue-400 hover:underline">
               Login
             </Link>
-            <Link href="/signup" className="bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-600">
+            <Link href="/signup" className="bg-blue-500 dark:bg-blue-700 text-white px-3 py-1 rounded text-sm hover:bg-blue-600 dark:hover:bg-blue-600">
               Sign Up
             </Link>
           </>

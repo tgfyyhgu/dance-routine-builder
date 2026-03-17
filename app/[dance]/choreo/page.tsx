@@ -450,13 +450,13 @@ export default function ChoreoPage() {
             <div className="flex gap-2">
               <Link 
                 href="/my-routines"
-                className="bg-indigo-500 text-white px-2 py-1 rounded hover:bg-indigo-600 transition-colors font-medium text-xs"
+                className="bg-indigo-500 dark:bg-indigo-700 text-white px-2 py-1 rounded hover:bg-indigo-600 dark:hover:bg-indigo-600 transition-colors font-medium text-xs"
               >
                 📖 My Routines
               </Link>
               <Link 
                 href={`/${dance}/figures`}
-                className="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600 transition-colors font-medium text-xs"
+                className="bg-blue-500 dark:bg-blue-700 text-white px-2 py-1 rounded hover:bg-blue-600 dark:hover:bg-blue-600 transition-colors font-medium text-xs"
               >
                 📚 Manage Figures
               </Link>

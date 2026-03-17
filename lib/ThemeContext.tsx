@@ -4,37 +4,39 @@ import { createContext, useContext, useEffect, useState, useMemo } from 'react'
 
 interface ThemeContextType {
   isDark: boolean
-  toggleTheme: () => void
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined)
 
 export function ThemeProvider({ children }: { readonly children: React.ReactNode }) {
   const [isDark, setIsDark] = useState(() => {
-    // Only access localStorage/matchMedia on client
+    // Only check on client
     if (typeof globalThis === 'undefined' || !globalThis.document) return false
-    const saved = localStorage.getItem('theme')
-    const prefersDark = globalThis.matchMedia?.('(prefers-color-scheme: dark)').matches ?? false
-    return saved === 'dark' || (!saved && prefersDark)
+    return globalThis.matchMedia?.('(prefers-color-scheme: dark)').matches ?? false
   })
 
-  // Update document class and localStorage when theme changes
+  // Listen for OS theme changes
+  useEffect(() => {
+    const mediaQuery = globalThis.matchMedia('(prefers-color-scheme: dark)')
+    const handleChange = (e: MediaQueryListEvent) => {
+      setIsDark(e.matches)
+    }
+
+    mediaQuery.addEventListener('change', handleChange)
+    return () => mediaQuery.removeEventListener('change', handleChange)
+  }, [])
+
+  // Update document class when theme changes
   useEffect(() => {
     if (isDark) {
       document.documentElement.classList.add('dark')
-      localStorage.setItem('theme', 'dark')
     } else {
       document.documentElement.classList.remove('dark')
-      localStorage.setItem('theme', 'light')
     }
   }, [isDark])
 
-  const toggleTheme = () => {
-    setIsDark(prev => !prev)
-  }
-
-  // Memoize context value to prevent unnecessary re-renders
-  const value = useMemo(() => ({ isDark, toggleTheme }), [isDark])
+  // Memoize context value
+  const value = useMemo(() => ({ isDark }), [isDark])
 
   return (
     <ThemeContext.Provider value={value}>

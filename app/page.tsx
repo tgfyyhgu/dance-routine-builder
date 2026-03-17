@@ -30,7 +30,7 @@ export default function HomePage() {
       <div className="mb-8">
         <Link
           href="/my-routines"
-          className="inline-block bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition-colors font-semibold"
+          className="inline-block bg-blue-500 dark:bg-blue-700 text-gray-900 dark:text-white px-6 py-3 rounded-lg hover:bg-blue-600 dark:hover:bg-blue-600 transition-colors font-semibold"
         >
           📚 My Routines
         </Link>
@@ -43,7 +43,7 @@ export default function HomePage() {
           <Link
             key={dance}
             href={`/${dance}/figures`}
-            className="bg-white shadow rounded-xl p-6 text-center text-lg font-semibold hover:shadow-lg hover:scale-105 transition"
+            className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow dark:shadow-lg rounded-xl p-6 text-center text-lg font-semibold hover:shadow-lg dark:hover:shadow-xl hover:scale-105 transition"
           >
             {dance.toUpperCase()}
           </Link>

@@ -78,8 +78,8 @@ function RoutineStepItem({
       {/* Inner container: The visual step card */}
       <div
         // Visual feedback: Border and background change when dragging
-        className={`border p-2 flex justify-between items-center bg-white rounded shadow-sm hover:shadow-md transition-all ${
-          isDragging ? "border-blue-400 bg-blue-50" : ""  // Blue highlight while dragging
+        className={`border p-2 flex justify-between items-center bg-white dark:bg-gray-900 dark:border-gray-700 rounded shadow-sm hover:shadow-md transition-all ${
+          isDragging ? "border-blue-400 dark:border-blue-500 bg-blue-50 dark:bg-blue-950" : ""  // Blue highlight while dragging
         }`}
       >
         {/* DRAG HANDLE: ⋮⋮ icon */}
@@ -112,10 +112,10 @@ function RoutineStepItem({
           */}
           <button
             onClick={handleJump}  // User clicks to preview this step
-            className="w-full text-left hover:bg-blue-50 rounded px-1 py-0.5 transition-colors font-medium text-gray-700 text-sm"
+            className="w-full text-left hover:bg-blue-50 dark:hover:bg-gray-800 rounded px-1 py-0.5 transition-colors font-medium text-gray-700 dark:text-gray-300 text-sm"
           >
             {/* Step counter: "1.", "2.", "3.", etc. (index + 1 because index is 0-based) */}
-            <span className="font-bold text-gray-700">{index + 1}.</span>
+            <span className="font-bold text-gray-700 dark:text-gray-400">{index + 1}.</span>
             {/* Figure name: "Feather Step", "Natural Turn", etc. */}
             {step.figure.name}
           </button>
@@ -125,7 +125,7 @@ function RoutineStepItem({
         {/* pointer-events-auto: Make sure clicks on this button aren't ignored */}
         <button
           onClick={handleRemove}  // User clicked Remove → delete this step
-          className="text-red-500 hover:text-red-700 font-medium ml-2 whitespace-nowrap pointer-events-auto text-xs"
+          className="text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 font-medium ml-2 whitespace-nowrap pointer-events-auto text-xs"
         >
           Remove
         </button>
@@ -210,11 +210,11 @@ export default function RoutineBuilder({
       */}
       {routineName !== undefined && (
         // Background: light blue with border (consistent with form design)
-        <div className="bg-blue-50 border-b border-blue-200 p-2 mb-2 rounded">
+        <div className="bg-blue-50 dark:bg-gray-800 border-b border-blue-200 dark:border-gray-700 p-2 mb-2 rounded">
           {/* Flex row: name label + input + buttons */}
           <div className="flex gap-2 items-center flex-wrap text-xs">
             {/* Label for routine name input */}
-            <label htmlFor="rb-routine-name" className="font-semibold text-gray-700 whitespace-nowrap">Name:</label>
+            <label htmlFor="rb-routine-name" className="font-semibold text-gray-700 dark:text-gray-300 whitespace-nowrap">Name:</label>
             
             {/* Editable routine name field */}
             {/* 
@@ -228,12 +228,12 @@ export default function RoutineBuilder({
               value={routineName}  // The current routine name (from parent state)
               onChange={(e) => setRoutineName?.(e.target.value)}  // Call parent callback as user types
               placeholder="Untitled Routine"  // Hint text
-              className="px-2 py-1 border border-gray-300 rounded text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 min-w-32"
+              className="px-2 py-1 border border-gray-300 dark:border-gray-700 rounded text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 min-w-32 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             />
             {handleNewRoutine && (
               <button
                 onClick={handleNewRoutine}
-                className="bg-gray-600 text-white px-2 py-1 rounded hover:bg-gray-700 transition-colors font-medium text-xs"
+                className="bg-gray-600 dark:bg-gray-700 text-white px-2 py-1 rounded hover:bg-gray-700 dark:hover:bg-gray-600 transition-colors font-medium text-xs"
                 title="Start a new routine"
               >
                 New
@@ -243,7 +243,7 @@ export default function RoutineBuilder({
               <button
                 onClick={saveRoutine}
                 disabled={isSaving}
-                className="bg-gray-600 text-white px-2 py-1 rounded hover:bg-gray-700 disabled:bg-gray-400 transition-colors font-medium text-xs"
+                className="bg-gray-600 dark:bg-gray-700 text-white px-2 py-1 rounded hover:bg-gray-700 dark:hover:bg-gray-600 disabled:bg-gray-400 dark:disabled:bg-gray-600 transition-colors font-medium text-xs"
               >
                 {isSaving ? "..." : "Save"}
               </button>
@@ -252,7 +252,7 @@ export default function RoutineBuilder({
               <button
                 onClick={handleSaveAs}
                 disabled={isSaving}
-                className="bg-gray-600 text-white px-2 py-1 rounded hover:bg-gray-700 disabled:bg-gray-400 transition-colors font-medium text-xs"
+                className="bg-gray-600 dark:bg-gray-700 text-white px-2 py-1 rounded hover:bg-gray-700 dark:hover:bg-gray-600 disabled:bg-gray-400 dark:disabled:bg-gray-600 transition-colors font-medium text-xs"
               >
                 Save As
               </button>
@@ -260,7 +260,7 @@ export default function RoutineBuilder({
             {handleExport && (
               <button
                 onClick={handleExport}
-                className="bg-gray-600 text-white px-2 py-1 rounded hover:bg-gray-700 transition-colors font-medium text-xs"
+                className="bg-gray-600 dark:bg-gray-700 text-white px-2 py-1 rounded hover:bg-gray-700 dark:hover:bg-gray-600 transition-colors font-medium text-xs"
               >
                 Export
               </button>
@@ -269,7 +269,7 @@ export default function RoutineBuilder({
               <>
                 <button
                   onClick={() => fileInputRef.current?.click()}
-                  className="bg-gray-600 text-white px-2 py-1 rounded hover:bg-gray-700 transition-colors font-medium text-xs"
+                  className="bg-gray-600 dark:bg-gray-700 text-white px-2 py-1 rounded hover:bg-gray-700 dark:hover:bg-gray-600 transition-colors font-medium text-xs"
                 >
                   Import
                 </button>
@@ -283,7 +283,7 @@ export default function RoutineBuilder({
               </>
             )}
             {saveStatus && (
-              <span className="text-xs text-green-600 font-semibold ml-auto">{saveStatus}</span>
+              <span className="text-xs text-green-600 dark:text-green-400 font-semibold ml-auto">{saveStatus}</span>
             )}
           </div>
         </div>
@@ -292,13 +292,13 @@ export default function RoutineBuilder({
       <div className="flex gap-2 mb-2">
         <button
           onClick={onUndo}
-          className="bg-gray-200 px-3 py-1 rounded hover:bg-gray-300 transition-colors text-xs"
+          className="bg-gray-200 dark:bg-gray-700 px-3 py-1 rounded hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors text-xs text-gray-900 dark:text-white font-medium"
         >
           Undo
         </button>
         <button
           onClick={onRedo}
-          className="bg-gray-200 px-3 py-1 rounded hover:bg-gray-300 transition-colors text-xs"
+          className="bg-gray-200 dark:bg-gray-700 px-3 py-1 rounded hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors text-xs text-gray-900 dark:text-white font-medium"
         >
           Redo
         </button>
@@ -307,17 +307,17 @@ export default function RoutineBuilder({
       <div
         ref={setNodeRef}
         className={`flex-1 border p-3 overflow-y-auto transition-all rounded ${
-          isOver ? "bg-blue-50 border-blue-400 border-2" : "bg-white"
+          isOver ? "bg-blue-50 dark:bg-blue-950 border-blue-400 dark:border-blue-600 border-2" : "bg-white dark:bg-gray-900 dark:border-gray-700"
         }`}
       >
         {routine.length === 0 && !isOver && (
-          <p className="text-gray-400 text-center py-8 text-sm">
+          <p className="text-gray-400 dark:text-gray-600 text-center py-8 text-sm">
             Drag figures from the left panel to build your routine
           </p>
         )}
 
         {routine.length === 0 && isOver && (
-          <p className="text-blue-400 text-center py-8 animate-pulse font-medium text-sm">
+          <p className="text-blue-400 dark:text-blue-300 text-center py-8 animate-pulse font-medium text-sm">
             Drop a figure here to add it to your routine
           </p>
         )}
