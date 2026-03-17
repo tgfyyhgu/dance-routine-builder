@@ -174,14 +174,14 @@ export default function RoutinePlayer({ steps, currentStep, onStepChange }: Prop
   if (steps.length === 0 || !step) return null
 
   return (
-    <div className="border p-4 flex flex-col h-full">
+    <div className="border dark:border-gray-800 p-4 flex flex-col h-full bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">
       <div className="mb-4">
         <div className="flex justify-between items-center mb-2">
           <div>
             <h2 className="text-base font-bold">
               {step.figure.name}
             </h2>
-            <div className="text-xs text-yellow-600">
+            <div className="text-xs text-yellow-600 dark:text-yellow-500">
               {step.figure.difficulty === 0 ? (
                 <span className="text-gray-400">Not rated</span>
               ) : (
@@ -198,7 +198,7 @@ export default function RoutinePlayer({ steps, currentStep, onStepChange }: Prop
         </div>
         
         {/* Progress bar */}
-        <div className="w-full bg-gray-200 rounded-full h-2">
+        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
           <div
             className="bg-blue-500 h-2 rounded-full transition-all duration-300"
             style={{ width: `${((currentStep + 1) / steps.length) * 100}%` }}
@@ -227,15 +227,15 @@ export default function RoutinePlayer({ steps, currentStep, onStepChange }: Prop
                 onClick={() => setAutoplay(!autoplay)}
                 className={`flex-1 px-3 py-2 rounded transition-colors text-xs font-medium ${
                   autoplay
-                    ? "bg-gray-500 text-white hover:bg-gray-600"
-                    : "bg-gray-600 text-white hover:bg-gray-700"
+                    ? "bg-gray-500 dark:bg-gray-700 text-white hover:bg-gray-600 dark:hover:bg-gray-600"
+                    : "bg-gray-600 dark:bg-gray-700 text-white hover:bg-gray-700 dark:hover:bg-gray-600"
                 }`}
               >
                 {autoplay ? "⏸ Manual" : "▶ Auto"}
               </button>
               <button
                 onClick={restart}
-                className="flex-1 bg-gray-500 text-white px-3 py-2 rounded hover:bg-gray-600 transition-colors text-xs disabled:opacity-50"
+                className="flex-1 bg-gray-500 dark:bg-gray-700 text-white px-3 py-2 rounded hover:bg-gray-600 dark:hover:bg-gray-600 transition-colors text-xs disabled:opacity-50"
                 disabled={currentStep === 0}
               >
                 ↻ Restart
@@ -246,19 +246,19 @@ export default function RoutinePlayer({ steps, currentStep, onStepChange }: Prop
             <div className="flex gap-2">
               <button
                 onClick={togglePlay}
-                className="flex-1 bg-blue-600 text-white px-3 py-2 rounded hover:bg-blue-700 transition-colors text-xs font-medium"
+                className="flex-1 bg-blue-600 dark:bg-blue-700 text-white px-3 py-2 rounded hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors text-xs font-medium"
               >
                 {playing ? "⏸ Pause" : "▶ Play"}
               </button>
               <button
                 onClick={replayCurrent}
-                className="flex-1 bg-gray-600 text-white px-3 py-2 rounded hover:bg-gray-700 transition-colors text-xs"
+                className="flex-1 bg-gray-600 dark:bg-gray-700 text-white px-3 py-2 rounded hover:bg-gray-700 dark:hover:bg-gray-600 transition-colors text-xs"
               >
                 ↻ Replay Clip
               </button>
               <button
                 onClick={toggleFullscreen}
-                className="flex-1 bg-gray-600 text-white px-3 py-2 rounded hover:bg-gray-700 transition-colors text-xs"
+                className="flex-1 bg-gray-600 dark:bg-gray-700 text-white px-3 py-2 rounded hover:bg-gray-700 dark:hover:bg-gray-600 transition-colors text-xs"
               >
                 ⛶ Fullscreen
               </button>
@@ -268,14 +268,14 @@ export default function RoutinePlayer({ steps, currentStep, onStepChange }: Prop
             <div className="flex gap-2">
               <button
                 onClick={previous}
-                className="flex-1 bg-gray-500 text-white px-3 py-2 rounded hover:bg-gray-600 transition-colors text-xs disabled:opacity-50"
+                className="flex-1 bg-gray-500 dark:bg-gray-700 text-white px-3 py-2 rounded hover:bg-gray-600 dark:hover:bg-gray-600 transition-colors text-xs disabled:opacity-50"
                 disabled={currentStep === 0}
               >
                 ← Previous
               </button>
               <button
                 onClick={next}
-                className="flex-1 bg-blue-600 text-white px-3 py-2 rounded hover:bg-blue-700 transition-colors text-xs disabled:opacity-50"
+                className="flex-1 bg-blue-600 dark:bg-blue-700 text-white px-3 py-2 rounded hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors text-xs disabled:opacity-50"
                 disabled={currentStep >= steps.length - 1}
               >
                 Next →

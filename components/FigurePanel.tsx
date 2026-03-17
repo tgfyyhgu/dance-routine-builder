@@ -110,7 +110,7 @@ const DraggableFigure = memo(function DraggableFigure({ figure, isExpanded, onTo
   return (
     <div
       key={figure.id}
-      className={`border-b transition-colors ${isDragging ? "bg-blue-100" : "hover:bg-gray-50"}`}
+      className={`border-b dark:border-gray-800 transition-colors ${isDragging ? "bg-blue-100 dark:bg-blue-900" : "hover:bg-gray-50 dark:hover:bg-gray-800"}`}
       style={{
         transform: CSS.Translate.toString(transform),
         opacity: isDragging ? 0.5 : 1,
@@ -119,11 +119,11 @@ const DraggableFigure = memo(function DraggableFigure({ figure, isExpanded, onTo
         zIndex: isDragging ? 1000 : "auto",
       }}
     >
-      <div className="flex items-center justify-between w-full p-2 hover:bg-gray-100">
+      <div className="flex items-center justify-between w-full p-2 hover:bg-gray-100 dark:hover:bg-gray-800">
         <button
           ref={setNodeRef}
           type="button"
-          className="flex-1 text-left cursor-grab active:cursor-grabbing text-sm bg-transparent border-none p-0"
+          className="flex-1 text-left cursor-grab active:cursor-grabbing text-sm bg-transparent border-none p-0 dark:text-gray-100"
           {...listeners}
           {...attributes}
           onClick={(e) => {
@@ -139,14 +139,14 @@ const DraggableFigure = memo(function DraggableFigure({ figure, isExpanded, onTo
             e.stopPropagation()
             onToggleExpand(figure.id)
           }}
-          className="px-2 py-1 text-xs bg-gray-300 hover:bg-gray-400 rounded transition-colors"
+          className="px-2 py-1 text-xs bg-gray-300 dark:bg-gray-700 hover:bg-gray-400 dark:hover:bg-gray-600 rounded transition-colors"
         >
           {isExpanded ? "−" : "+"}
         </button>
       </div>
 
       {isExpanded && (
-        <div className="p-3 text-xs space-y-2 bg-white border-t">
+        <div className="p-3 text-xs space-y-2 bg-white dark:bg-gray-900 border-t dark:border-gray-800 dark:text-gray-100">
           <div>Difficulty: {figure.difficulty}</div>
           <div>{figure.note}</div>
           {videoId && (
@@ -183,12 +183,12 @@ export default function FigurePanel({
     <>
       {!collapsed && (
         <div
-          className="border-r bg-gray-50 overflow-y-scroll overflow-x-clip"
+          className="border-r dark:border-gray-800 bg-gray-50 dark:bg-gray-900 overflow-y-scroll overflow-x-clip"
           style={{ width: panelWidth, contain: "layout", position: "relative" }}
         >
-          <div className="p-3 border-b flex justify-between">
+          <div className="p-3 border-b dark:border-gray-800 flex justify-between dark:text-white">
             <span className="font-bold text-sm">Figures</span>
-            <button onClick={onCollapse} className="text-gray-600 text-sm">
+            <button onClick={onCollapse} className="text-gray-600 dark:text-gray-400 text-sm">
               ◀
             </button>
           </div>
@@ -211,7 +211,7 @@ export default function FigurePanel({
 
       {!collapsed && (
         <button
-          className="w-1 bg-gray-300 hover:bg-gray-400 cursor-col-resize transition-colors"
+          className="w-1 bg-gray-300 dark:bg-gray-700 hover:bg-gray-400 dark:hover:bg-gray-600 cursor-col-resize transition-colors"
           onMouseDown={onStartResize}
           aria-label="Resize panel"
         />
@@ -220,7 +220,7 @@ export default function FigurePanel({
       {collapsed && (
         <button
           onClick={onCollapse}
-          className="text-gray-600 p-2 hover:bg-gray-100"
+          className="text-gray-600 dark:text-gray-400 p-2 hover:bg-gray-100 dark:hover:bg-gray-800"
           aria-label="Open figures panel"
         >
           ▶

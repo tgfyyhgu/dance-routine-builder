@@ -442,11 +442,11 @@ export default function ChoreoPage() {
 
   return (
     <DndContext collisionDetection={pointerWithin} onDragEnd={handleDragEnd}>
-      <div className="flex h-screen flex-col">
+      <div className="flex h-screen flex-col bg-white dark:bg-gray-950">
         {/* Header */}
-        <div className="border-b bg-white px-6 py-3">
+        <div className="border-b dark:border-gray-800 bg-white dark:bg-gray-900 px-6 py-3">
           <div className="flex justify-between items-center">
-            <h1 className="text-lg font-bold">{dance.toUpperCase()} - Choreography Builder</h1>
+            <h1 className="text-lg font-bold text-gray-900 dark:text-white">{dance.toUpperCase()} - Choreography Builder</h1>
             <div className="flex gap-2">
               <Link 
                 href="/my-routines"
@@ -465,7 +465,7 @@ export default function ChoreoPage() {
         </div>
 
         {/* Main content */}
-        <div className="flex flex-1 overflow-hidden">
+        <div className="flex flex-1 overflow-hidden bg-white dark:bg-gray-950">
           {/* Left panel: Figures */}
           <FigurePanel
             figures={figures}

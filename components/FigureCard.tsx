@@ -45,25 +45,25 @@ export default function FigureCard({
 
   return (
     <tr
-      className="border-b cursor-pointer hover:bg-gray-50 transition-colors"
+      className="border-b dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
       onClick={() => toggleVideo(figureId)}
     >
       <td className="p-2 font-semibold text-sm">{name}</td>
 
       <td className="p-2 text-xs">
         {difficulty === 0 ? (
-          <span className="text-gray-400 text-xs">Not rated</span>
+          <span className="text-gray-400 dark:text-gray-500 text-xs">Not rated</span>
         ) : (
-          <span className="text-yellow-600">
+          <span className="text-yellow-600 dark:text-yellow-500">
             {"★".repeat(difficulty)}{"☆".repeat(5 - difficulty)}
           </span>
         )}
       </td>
 
-      <td className="p-2 text-gray-600 text-xs max-w-xs overflow-auto">{note}</td>
+      <td className="p-2 text-gray-600 dark:text-gray-400 text-xs max-w-xs overflow-auto">{note}</td>
 
       <td className="p-2 text-center text-xs">
-        {videoId && <span className="text-blue-600 text-xs">{videoVisible ? "▶" : "▼"}</span>}
+        {videoId && <span className="text-blue-600 dark:text-blue-400 text-xs">{videoVisible ? "▶" : "▼"}</span>}
       </td>
 
       {videoVisible && videoId && (
