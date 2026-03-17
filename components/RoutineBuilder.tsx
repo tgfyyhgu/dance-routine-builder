@@ -292,15 +292,17 @@ export default function RoutineBuilder({
       <div className="flex gap-2 mb-2">
         <button
           onClick={onUndo}
-          className="bg-gray-200 dark:bg-gray-700 px-3 py-1 rounded hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors text-xs text-gray-900 dark:text-white font-medium"
+          className="bg-gray-200 dark:bg-gray-700 px-3 py-1 rounded hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors text-sm text-gray-900 dark:text-white font-medium"
+          title="Undo (Ctrl+Z)"
         >
-          Undo
+          ↶
         </button>
         <button
           onClick={onRedo}
-          className="bg-gray-200 dark:bg-gray-700 px-3 py-1 rounded hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors text-xs text-gray-900 dark:text-white font-medium"
+          className="bg-gray-200 dark:bg-gray-700 px-3 py-1 rounded hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors text-sm text-gray-900 dark:text-white font-medium"
+          title="Redo (Ctrl+Shift+Z)"
         >
-          Redo
+          ↷
         </button>
       </div>
 
