@@ -26,6 +26,7 @@ export default function RoutinePlayer({
   const [playbackSpeed, setPlaybackSpeed] = useState(1)
   const playerRef = useRef<HTMLDivElement>(null)
   const playerInstanceRef = useRef<YTPlayer | null>(null)
+  const autoAdvancingRef = useRef(false)
   const playerId = useId()
 
   const step = steps.length > 0 ? steps[currentStep] : null
@@ -73,9 +74,15 @@ export default function RoutinePlayer({
       events: {
         onReady: () => {
           playerInstanceRef.current?.seekTo(startTime)
-          // Clicking a step always pauses (manual override)
-          playerInstanceRef.current?.pauseVideo()
-          setPlaying(false)
+          // Auto-play if this is a Repeat All auto-advance, otherwise pause (user click override)
+          if (autoAdvancingRef.current && repeatMode === 'repeatAll') {
+            autoAdvancingRef.current = false // Reset flag
+            playerInstanceRef.current?.playVideo()
+            setPlaying(true)
+          } else {
+            playerInstanceRef.current?.pauseVideo()
+            setPlaying(false)
+          }
         },
         onStateChange: (event: { data: number }) => {
           // 1 = playing, 2 = paused, 0 = ended
@@ -91,6 +98,7 @@ export default function RoutinePlayer({
               setPlaying(false)
             } else if (repeatMode === 'repeatAll') {
               // Repeat All: Auto-advance to next (or loop to first)
+              autoAdvancingRef.current = true // Mark this as an auto-advance
               if (currentStep < steps.length - 1) {
                 // Not at last step, go to next
                 onStepChange(currentStep + 1)
