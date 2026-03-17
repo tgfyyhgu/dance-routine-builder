@@ -159,24 +159,46 @@ export default function RoutinePlayer({
     if (!playerInstanceRef.current || !step?.figure.end_time) return
 
     const endTime = step.figure.end_time
+    let hasReachedEnd = false // Track if we've already handled this end event
+    
     const interval = setInterval(() => {
       try {
         // Guard: check if method exists before calling
         if (!playerInstanceRef.current?.getCurrentTime) return
         
         const currentTime = playerInstanceRef.current.getCurrentTime()
-        if (typeof currentTime === 'number' && currentTime >= endTime) {
-          playerInstanceRef.current?.pauseVideo()
-          setPlaying(false)
-          console.log(`[RoutinePlayer] Paused at end time ${endTime}s`)
+        if (typeof currentTime === 'number' && currentTime >= endTime && !hasReachedEnd) {
+          hasReachedEnd = true // Prevent multiple triggers
+          console.log(`[RoutinePlayer] Reached end time ${endTime}s - handling repeat mode`)
+          
+          if (repeatMode === 'repeat1') {
+            // Repeat 1: Loop same video
+            const startTime = step?.figure.start_time || 0
+            playerInstanceRef.current?.seekTo(startTime)
+            playerInstanceRef.current?.pauseVideo()
+            setPlaying(false)
+            console.log(`[RoutinePlayer] Repeat 1: looped back to ${startTime}s`)
+          } else if (repeatMode === 'repeatAll') {
+            // Repeat All: Auto-advance like onStateChange event 0 does
+            autoAdvancingRef.current = true
+            if (currentStep < steps.length - 1) {
+              onStepChange(currentStep + 1)
+            } else {
+              onStepChange(0)
+            }
+            console.log(`[RoutinePlayer] Repeat All: advancing to next step`)
+          }
         }
       } catch (err) {
         // Silently ignore errors (player might be initializing or destroyed)
       }
     }, 100) // Check every 100ms
 
-    return () => clearInterval(interval)
-  }, [videoId, step?.figure.end_time])
+    return () => {
+      clearInterval(interval)
+      hasReachedEnd = false
+    }
+  }, [videoId, step?.figure.end_time, repeatMode, currentStep, steps.length, onStepChange])
 
   function previous() {
     if (currentStep > 0) {
@@ -399,14 +421,20 @@ export default function RoutinePlayer({
                   }
                   
                   try {
-                    // Get current player state to diagnose
-                    const currentTime = playerInstanceRef.current.getCurrentTime?.() ?? 'unknown'
-                    console.log(`[RoutinePlayer] Attempting speed change to ${newSpeed}x (current time: ${currentTime}s)`)
-                    
+                    console.log(`[RoutinePlayer] Calling setPlaybackRate(${newSpeed})`)
                     playerInstanceRef.current.setPlaybackRate(newSpeed)
-                    console.log(`[RoutinePlayer] Speed set to ${newSpeed}x - check video playback`)
+                    
+                    // Check if it actually worked by getting the current rate
+                    setTimeout(() => {
+                      try {
+                        const availableRates = playerInstanceRef.current?.getAvailablePlaybackRates?.() || 'unknown'
+                        console.log(`[RoutinePlayer] Available rates: ${availableRates}, Attempted to set: ${newSpeed}x`)
+                      } catch (e) {
+                        console.log(`[RoutinePlayer] Could not verify playback rate`)
+                      }
+                    }, 100)
                   } catch (err) {
-                    console.error(`[RoutinePlayer] Failed to set playback rate:`, (err as Error).message)
+                    console.error(`[RoutinePlayer] setPlaybackRate failed:`, (err as Error).message)
                   }
                 }}
                 className="w-full h-2 bg-gray-300 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer accent-blue-600 dark:accent-blue-500"
