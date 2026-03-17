@@ -7,6 +7,17 @@
 import { useState, useEffect, useRef, useId } from "react"
 import { RoutineStep, YTPlayer } from "@/types/routine"
 
+// Helper to clean YouTube URLs (remove playlist parameters that prevent embedding)
+function cleanYouTubeUrl(url: string): string {
+  if (!url) return url
+  const regExp = /^.*(?:youtu\.be\/|watch\?v=)([^#&?]*).*/
+  const videoId = regExp.exec(url)?.[1]
+  if (videoId) {
+    return `https://www.youtube.com/watch?v=${videoId}`
+  }
+  return url
+}
+
 interface Props {
   readonly steps: RoutineStep[]
   readonly currentStep: number
@@ -34,18 +45,18 @@ export default function RoutinePlayer({
   const regExp =
     /^.*(?:youtu\.be\/|watch\?v=)([^#&?]*).*/
 
-  const videoId = step?.figure.youtube_url 
-    ? (regExp.exec(step.figure.youtube_url)?.[1] ?? null)
+  // Clean the URL to remove playlist parameters, then extract video ID
+  const cleanedUrl = step?.figure.youtube_url ? cleanYouTubeUrl(step.figure.youtube_url) : null
+  const videoId = cleanedUrl 
+    ? (regExp.exec(cleanedUrl)?.[1] ?? null)
     : null
 
   // Debug logging for troubleshooting old figures
   useEffect(() => {
-    if (step?.figure.youtube_url) {
-      const pattern = /^.*(?:youtu\.be\/|watch\?v=)([^#&?]*).*/
-      const extracted = pattern.exec(step?.figure.youtube_url)?.[1]
-      console.log(`[RoutinePlayer] Figure: ${step.figure.name} | URL: ${step.figure.youtube_url} | VideoID: ${extracted || 'NONE'}`)
+    if (step?.figure.youtube_url && cleanedUrl) {
+      console.log(`[RoutinePlayer] Figure: ${step.figure.name} | Original URL: ${step.figure.youtube_url} | Cleaned URL: ${cleanedUrl} | VideoID: ${videoId || 'NONE'}`)
     }
-  }, [step?.figure.youtube_url, step?.figure.name])
+  }, [cleanedUrl, videoId, step?.figure.youtube_url, step?.figure.name])
 
   // Load YouTube API script
   useEffect(() => {

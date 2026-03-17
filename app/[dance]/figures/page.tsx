@@ -241,15 +241,41 @@ export default function FiguresPage() {
 
       {!editMode && (
         <div className="flex justify-between mb-4">
-          <button
-            className="bg-yellow-500 dark:bg-yellow-600 text-white px-4 py-2 rounded hover:bg-yellow-600 dark:hover:bg-yellow-700 transition-colors font-medium"
-            onClick={() => {
-              setEditedFigures(figures)
-              setEditMode(true)
-            }}
-          >
-            Edit
-          </button>
+          <div className="flex gap-2">
+            <button
+              className="bg-yellow-500 dark:bg-yellow-600 text-white px-4 py-2 rounded hover:bg-yellow-600 dark:hover:bg-yellow-700 transition-colors font-medium"
+              onClick={() => {
+                setEditedFigures(figures)
+                setEditMode(true)
+              }}
+            >
+              Edit
+            </button>
+            <button
+              className="bg-green-600 dark:bg-green-700 text-white px-4 py-2 rounded hover:bg-green-700 dark:hover:bg-green-600 transition-colors font-medium text-sm"
+              onClick={async () => {
+                if (!confirm("This will update all figures in the database to use clean YouTube URLs (removing playlist parameters). This fixes videos that won't embed. Continue?")) return
+                
+                let cleaned = 0
+                for (const fig of figures) {
+                  const cleanUrl = cleanYouTubeUrl(fig.youtube_url)
+                  if (cleanUrl !== fig.youtube_url) {
+                    const { error } = await supabase
+                      .from("figures")
+                      .update({ youtube_url: cleanUrl })
+                      .eq("id", fig.id)
+                    if (!error) cleaned++
+                  }
+                }
+                alert(`Cleaned ${cleaned} figures with playlist parameters`)
+                // Reload
+                window.location.reload()
+              }}
+              title="Clean YouTube URLs in database (removes playlist params that prevent embedding)"
+            >
+              Clean URLs
+            </button>
+          </div>
           <div className="flex gap-4">
             <button
               className="bg-blue-500 dark:bg-blue-700 text-white px-4 py-2 rounded hover:bg-blue-600 dark:hover:bg-blue-600 transition-colors font-medium"
