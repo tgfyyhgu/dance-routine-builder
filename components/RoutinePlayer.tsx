@@ -118,11 +118,9 @@ export default function RoutinePlayer({
       autoAdvancingRef.current = false // Reset flag
       playerInstanceRef.current.playVideo()
       // setPlaying will update from onStateChange event
-    } else if (!autoAdvancingRef.current) {
-      // User click or manual navigation - pause
-      playerInstanceRef.current.pauseVideo()
-      // setPlaying will update from onStateChange event
     }
+    // Trust YouTube's default pause state - don't call pauseVideo() here
+    // Manual navigation and clicks call pauseVideo() directly as needed
   }, [videoId, repeatMode])
 
   function previous() {
