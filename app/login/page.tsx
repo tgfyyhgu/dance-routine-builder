@@ -16,29 +16,22 @@ export default function LoginPage() {
     e.preventDefault()
     setError(null)
     setLoading(true)
-    console.log('🔐 Login attempt:', email)
 
     try {
       const { data, error: authError } = await login(email, password)
-      console.log('📡 Response:', { data, error: authError })
 
       if (authError) {
-        console.log('❌ Auth error:', authError.message)
         setError(authError.message)
         setLoading(false)
         return
       }
 
       if (data.user) {
-        console.log('✅ Login success, User:', data.user.email)
-        console.log('🚀 Redirecting to /my-routines...')
         router.push('/my-routines')
       } else {
-        console.log('⚠️ No user data returned')
         setError('Login failed: no user data')
       }
-    } catch (err) {
-      console.log('💥 Catch error:', err)
+    } catch {
       setError('An unexpected error occurred')
     } finally {
       setLoading(false)

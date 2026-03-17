@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import Link from "next/link"
 import { supabase } from "@/lib/supabaseClient"
 import { useRouter } from "next/navigation"
+import { useAuth } from "@/lib/AuthContext"
 
 interface SavedRoutine {
   id: string
@@ -15,17 +16,28 @@ interface SavedRoutine {
 
 export default function MyRoutinesPage() {
   const router = useRouter()
+  const { user, loading: authLoading } = useAuth()
   const [routines, setRoutines] = useState<SavedRoutine[]>([])
   const [loading, setLoading] = useState(true)
   const [groupedByDance, setGroupedByDance] = useState<Record<string, SavedRoutine[]>>({})
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
 
   useEffect(() => {
+    // Don't load routines until we know if user is authenticated
+    if (authLoading) return
+
+    // Redirect if not logged in
+    if (!user) {
+      router.push('/login')
+      return
+    }
+
     async function loadRoutines() {
       try {
         const { data, error } = await supabase
           .from("routines")
           .select("*")
+          .eq("user_id", user!.id)
           .order("dance_style", { ascending: true })
           .order("created_at", { ascending: false })
 
@@ -56,7 +68,7 @@ export default function MyRoutinesPage() {
     }
 
     loadRoutines()
-  }, [])
+  }, [user, authLoading, router])
 
   async function deleteRoutine(id: string) {
     try {

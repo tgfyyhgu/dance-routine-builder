@@ -14,6 +14,7 @@ import Link from "next/link"
 import { DndContext, DragEndEvent, pointerWithin } from "@dnd-kit/core"
 // Database
 import { supabase } from "@/lib/supabaseClient"
+import { useAuth } from "@/lib/AuthContext"
 // Components
 import RoutineBuilder from "@/components/RoutineBuilder"
 import RoutinePlayer from "@/components/RoutinePlayer"
@@ -32,6 +33,7 @@ export default function ChoreoPage() {
   const searchParams = useSearchParams()
   const dance = params.dance as string
   const routineIdFromUrl = searchParams.get("routineId")
+  const { user } = useAuth()
 
   // State: UI & data
   const [figures, setFigures] = useState<Figure[]>([])
@@ -279,7 +281,7 @@ export default function ChoreoPage() {
       if (routineId === null) {
         const newId = uuid()
         const { error } = await supabase.from("routines").insert([
-          { id: newId, ...routineData },
+          { id: newId, user_id: user?.id, ...routineData },
         ])
         if (error) {
           console.error("Error saving routine:", error)
@@ -338,6 +340,7 @@ export default function ChoreoPage() {
       const newId = uuid()
       const routineData = {
         id: newId,
+        user_id: user?.id,
         name: newName,
         dance_style: dance,
         steps: routine,
