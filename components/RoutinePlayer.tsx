@@ -170,14 +170,23 @@ export default function RoutinePlayer({
         playerInstanceRef.current?.pauseVideo()
         setPlaying(false)
       } else if (repeatMode === 'repeatAll') {
-        // Repeat All: Auto-advance to next step
-        playerInstanceRef.current?.pauseVideo()
-        setPlaying(false)
-        autoAdvancingRef.current = true
-        
+        // Repeat All: Auto-advance to next step or loop within single video
         if (currentStep < steps.length - 1) {
+          // Multiple videos: go to next step
+          playerInstanceRef.current?.pauseVideo()
+          setPlaying(false)
+          autoAdvancingRef.current = true
           onStepChange(currentStep + 1)
+        } else if (steps.length === 1) {
+          // Single video: loop back to start and resume playing
+          playerInstanceRef.current?.seekTo(startTime)
+          playerInstanceRef.current?.playVideo()
+          setPlaying(true)
         } else {
+          // Multiple videos, at last: go back to first
+          playerInstanceRef.current?.pauseVideo()
+          setPlaying(false)
+          autoAdvancingRef.current = true
           onStepChange(0)
         }
       }
