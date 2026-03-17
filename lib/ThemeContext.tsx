@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useContext, useEffect, useState, useMemo } from 'react'
 
 interface ThemeContextType {
   isDark: boolean
@@ -9,21 +9,17 @@ interface ThemeContextType {
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined)
 
-export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [isDark, setIsDark] = useState(false)
-  const [mounted, setMounted] = useState(false)
-
-  // Load theme preference from localStorage on mount
-  useEffect(() => {
+export function ThemeProvider({ children }: { readonly children: React.ReactNode }) {
+  const [isDark, setIsDark] = useState(() => {
+    // Only access localStorage/matchMedia on client
+    if (typeof globalThis === 'undefined' || !globalThis.document) return false
     const saved = localStorage.getItem('theme')
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
-    setIsDark(saved === 'dark' || (!saved && prefersDark))
-    setMounted(true)
-  }, [])
+    const prefersDark = globalThis.matchMedia?.('(prefers-color-scheme: dark)').matches ?? false
+    return saved === 'dark' || (!saved && prefersDark)
+  })
 
-  // Update document class and localStorage
+  // Update document class and localStorage when theme changes
   useEffect(() => {
-    if (!mounted) return
     if (isDark) {
       document.documentElement.classList.add('dark')
       localStorage.setItem('theme', 'dark')
@@ -31,17 +27,17 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       document.documentElement.classList.remove('dark')
       localStorage.setItem('theme', 'light')
     }
-  }, [isDark, mounted])
+  }, [isDark])
 
   const toggleTheme = () => {
     setIsDark(prev => !prev)
   }
 
-  // Prevent flash of unstyled content
-  if (!mounted) return <>{children}</>
+  // Memoize context value to prevent unnecessary re-renders
+  const value = useMemo(() => ({ isDark, toggleTheme }), [isDark])
 
   return (
-    <ThemeContext.Provider value={{ isDark, toggleTheme }}>
+    <ThemeContext.Provider value={value}>
       {children}
     </ThemeContext.Provider>
   )
