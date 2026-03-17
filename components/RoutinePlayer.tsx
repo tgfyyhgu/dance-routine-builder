@@ -34,7 +34,6 @@ export default function RoutinePlayer({
   onRepeatModeChange
 }: Props) {
   const [playing, setPlaying] = useState(false)
-  const [playbackSpeed, setPlaybackSpeed] = useState(1)
   const playerRef = useRef<HTMLDivElement>(null)
   const playerInstanceRef = useRef<YTPlayer | null>(null)
   const autoAdvancingRef = useRef(false)
@@ -50,13 +49,6 @@ export default function RoutinePlayer({
   const videoId = cleanedUrl 
     ? (regExp.exec(cleanedUrl)?.[1] ?? null)
     : null
-
-  // Debug logging for troubleshooting old figures
-  useEffect(() => {
-    if (step?.figure.youtube_url && cleanedUrl) {
-      console.log(`[RoutinePlayer] Figure: ${step.figure.name} | Original URL: ${step.figure.youtube_url} | Cleaned URL: ${cleanedUrl} | VideoID: ${videoId || 'NONE'}`)
-    }
-  }, [cleanedUrl, videoId, step?.figure.youtube_url, step?.figure.name])
 
   // Load YouTube API script
   useEffect(() => {
@@ -154,51 +146,34 @@ export default function RoutinePlayer({
     }
   }, [videoId, step?.figure.start_time, step?.figure.end_time, currentStep, steps.length, onStepChange, playerId, repeatMode])
 
-  // Monitor video time and pause at endTime since playerVars end doesn't work reliably
+  // Monitor video time and pause at endTime (let onStateChange handle the repeat logic)
   useEffect(() => {
     if (!playerInstanceRef.current || !step?.figure.end_time) return
 
     const endTime = step.figure.end_time
-    let hasReachedEnd = false // Track if we've already handled this end event
+    let alreadyPaused = false
     
     const interval = setInterval(() => {
       try {
-        // Guard: check if method exists before calling
         if (!playerInstanceRef.current?.getCurrentTime) return
         
         const currentTime = playerInstanceRef.current.getCurrentTime()
-        if (typeof currentTime === 'number' && currentTime >= endTime && !hasReachedEnd) {
-          hasReachedEnd = true // Prevent multiple triggers
-          console.log(`[RoutinePlayer] Reached end time ${endTime}s - handling repeat mode`)
-          
-          if (repeatMode === 'repeat1') {
-            // Repeat 1: Loop same video
-            const startTime = step?.figure.start_time || 0
-            playerInstanceRef.current?.seekTo(startTime)
-            playerInstanceRef.current?.pauseVideo()
-            setPlaying(false)
-            console.log(`[RoutinePlayer] Repeat 1: looped back to ${startTime}s`)
-          } else if (repeatMode === 'repeatAll') {
-            // Repeat All: Auto-advance like onStateChange event 0 does
-            autoAdvancingRef.current = true
-            if (currentStep < steps.length - 1) {
-              onStepChange(currentStep + 1)
-            } else {
-              onStepChange(0)
-            }
-            console.log(`[RoutinePlayer] Repeat All: advancing to next step`)
-          }
+        if (typeof currentTime === 'number' && currentTime >= endTime && !alreadyPaused) {
+          alreadyPaused = true
+          // Just pause - let the onStateChange listener handle the repeat logic
+          playerInstanceRef.current?.pauseVideo()
+          console.log(`[RoutinePlayer] Paused at endTime ${endTime}s`)
         }
-      } catch (err) {
-        // Silently ignore errors (player might be initializing or destroyed)
+      } catch {
+        // Ignore errors
       }
-    }, 100) // Check every 100ms
+    }, 100)
 
     return () => {
       clearInterval(interval)
-      hasReachedEnd = false
+      alreadyPaused = false
     }
-  }, [videoId, step?.figure.end_time, repeatMode, currentStep, steps.length, onStepChange])
+  }, [videoId, step?.figure.end_time])
 
   function previous() {
     if (currentStep > 0) {
@@ -395,95 +370,7 @@ export default function RoutinePlayer({
               </button>
             </div>
 
-            {/* Speed control */}
-            <div className="space-y-2">
-              <label className="text-xs font-medium text-gray-700 dark:text-gray-300 block">
-                Speed: {playbackSpeed.toFixed(1)}x
-              </label>
-              <input
-                type="range"
-                min="0.25"
-                max="2"
-                step="0.25"
-                value={playbackSpeed}
-                onChange={(e) => {
-                  const newSpeed = Number.parseFloat(e.target.value)
-                  setPlaybackSpeed(newSpeed)
-                  
-                  if (!playerInstanceRef.current) {
-                    console.warn(`[RoutinePlayer] Player instance not available`)
-                    return
-                  }
-                  
-                  if (!playerInstanceRef.current.setPlaybackRate) {
-                    console.warn(`[RoutinePlayer] setPlaybackRate method not available on player`)
-                    return
-                  }
-                  
-                  try {
-                    console.log(`[RoutinePlayer] Calling setPlaybackRate(${newSpeed})`)
-                    playerInstanceRef.current.setPlaybackRate(newSpeed)
-                    
-                    // Check if it actually worked by getting the current rate
-                    setTimeout(() => {
-                      try {
-                        const availableRates = playerInstanceRef.current?.getAvailablePlaybackRates?.() || 'unknown'
-                        console.log(`[RoutinePlayer] Available rates: ${availableRates}, Attempted to set: ${newSpeed}x`)
-                      } catch (e) {
-                        console.log(`[RoutinePlayer] Could not verify playback rate`)
-                      }
-                    }, 100)
-                  } catch (err) {
-                    console.error(`[RoutinePlayer] setPlaybackRate failed:`, (err as Error).message)
-                  }
-                }}
-                className="w-full h-2 bg-gray-300 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer accent-blue-600 dark:accent-blue-500"
-                title="Adjust playback speed"
-              />
-              <div className="flex gap-1 text-xs">
-                <button
-                  onClick={() => {
-                    const newSpeed = Math.max(0.25, playbackSpeed - 0.25)
-                    setPlaybackSpeed(newSpeed)
-                    try {
-                      playerInstanceRef.current?.setPlaybackRate(newSpeed)
-                    } catch (err) {
-                      console.error('[RoutinePlayer] Failed to set speed:', err)
-                    }
-                  }}
-                  className="flex-1 bg-gray-500 dark:bg-gray-700 text-white px-2 py-1 rounded hover:bg-gray-600 dark:hover:bg-gray-600"
-                >
-                  -
-                </button>
-                <button
-                  onClick={() => {
-                    setPlaybackSpeed(1)
-                    try {
-                      playerInstanceRef.current?.setPlaybackRate(1)
-                    } catch (err) {
-                      console.error('[RoutinePlayer] Failed to reset speed:', err)
-                    }
-                  }}
-                  className="flex-1 bg-gray-500 dark:bg-gray-700 text-white px-2 py-1 rounded hover:bg-gray-600 dark:hover:bg-gray-600"
-                >
-                  Reset
-                </button>
-                <button
-                  onClick={() => {
-                    const newSpeed = Math.min(2, playbackSpeed + 0.25)
-                    setPlaybackSpeed(newSpeed)
-                    try {
-                      playerInstanceRef.current?.setPlaybackRate(newSpeed)
-                    } catch (err) {
-                      console.error('[RoutinePlayer] Failed to set speed:', err)
-                    }
-                  }}
-                  className="flex-1 bg-gray-500 dark:bg-gray-700 text-white px-2 py-1 rounded hover:bg-gray-600 dark:hover:bg-gray-600"
-                >
-                  +
-                </button>
-              </div>
-            </div>
+
           </div>
         </div>
       )}
