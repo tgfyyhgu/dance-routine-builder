@@ -141,8 +141,8 @@ export default function RoutinePlayer({ steps, currentStep, onStepChange }: Prop
 
     const startTime = step?.figure.start_time || 0
     playerInstanceRef.current.seekTo(startTime)
-    playerInstanceRef.current.playVideo()
-    setPlaying(true)
+    playerInstanceRef.current.pauseVideo()
+    setPlaying(false)
   }
 
   function toggleFullscreen() {
