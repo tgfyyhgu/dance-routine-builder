@@ -233,8 +233,8 @@ export default function RoutinePlayer({
           
           {/* Notes section with scroll if needed */}
           {step.figure.note && (
-            <div className="max-h-32 overflow-y-auto mb-3 p-2 bg-gray-50 rounded text-xs border border-gray-200">
-              <p className="text-gray-700">{step.figure.note}</p>
+            <div className="max-h-32 overflow-y-auto mb-3 p-2 bg-gray-100 dark:bg-gray-800 rounded text-xs border border-gray-300 dark:border-gray-700">
+              <p className="text-gray-800 dark:text-gray-100">{step.figure.note}</p>
             </div>
           )}
 
@@ -363,8 +363,8 @@ export default function RoutinePlayer({
 
           {/* Notes section with scroll if needed */}
           {step.figure.note && (
-            <div className="max-h-32 overflow-y-auto mb-3 p-2 bg-gray-50 rounded text-xs border border-gray-200">
-              <p className="text-gray-700">{step.figure.note}</p>
+            <div className="max-h-32 overflow-y-auto mb-3 p-2 bg-gray-100 dark:bg-gray-800 rounded text-xs border border-gray-300 dark:border-gray-700">
+              <p className="text-gray-800 dark:text-gray-100">{step.figure.note}</p>
             </div>
           )}
 
