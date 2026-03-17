@@ -124,8 +124,7 @@ export default function RoutinePlayer({ steps, currentStep, onStepChange }: Prop
       playerInstanceRef.current.pauseVideo()
       setPlaying(false)
     } else {
-      const startTime = step?.figure.start_time || 0
-      playerInstanceRef.current.seekTo(startTime)
+      // Resume from current position, don't seek to start
       playerInstanceRef.current.playVideo()
       setPlaying(true)
     }
@@ -256,6 +255,56 @@ export default function RoutinePlayer({ steps, currentStep, onStepChange }: Prop
                 className="flex-1 bg-gray-600 text-white px-3 py-2 rounded hover:bg-gray-700 transition-colors text-xs"
               >
                 ⛶ Fullscreen
+              </button>
+            </div>
+
+            {/* Navigation controls row */}
+            <div className="flex gap-2">
+              <button
+                onClick={previous}
+                className="flex-1 bg-gray-500 text-white px-3 py-2 rounded hover:bg-gray-600 transition-colors text-xs disabled:opacity-50"
+                disabled={currentStep === 0}
+              >
+                ← Previous
+              </button>
+              <button
+                onClick={next}
+                className="flex-1 bg-blue-600 text-white px-3 py-2 rounded hover:bg-blue-700 transition-colors text-xs disabled:opacity-50"
+                disabled={currentStep >= steps.length - 1}
+              >
+                Next →
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {!videoId && (
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <div className="grow flex items-center justify-center bg-gray-100 rounded mb-3">
+            <div className="text-center">
+              <p className="text-gray-600 text-sm mb-2">No video available</p>
+              <p className="text-gray-500 text-xs">for {step?.figure.name}</p>
+            </div>
+          </div>
+
+          {/* Notes section with scroll if needed */}
+          {step.figure.note && (
+            <div className="max-h-32 overflow-y-auto mb-3 p-2 bg-gray-50 rounded text-xs border border-gray-200">
+              <p className="text-gray-700">{step.figure.note}</p>
+            </div>
+          )}
+
+          {/* Control buttons - always at bottom */}
+          <div className="grow-0 space-y-2">
+            {/* Primary controls row */}
+            <div className="flex gap-2">
+              <button
+                onClick={restart}
+                className="flex-1 bg-gray-500 text-white px-3 py-2 rounded hover:bg-gray-600 transition-colors text-xs disabled:opacity-50"
+                disabled={currentStep === 0}
+              >
+                ↻ Restart
               </button>
             </div>
 
