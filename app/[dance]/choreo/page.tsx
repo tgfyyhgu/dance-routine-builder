@@ -182,6 +182,13 @@ export default function ChoreoPage() {
     pushHistory(newRoutine)
   }
 
+  // Add figure to routine at a specific index
+  function addFigureAtIndex(fig: Figure, index: number) {
+    const newRoutine = [...routine]
+    newRoutine.splice(index, 0, { stepId: uuid(), figure: fig })
+    pushHistory(newRoutine)
+  }
+
   // Remove step from routine
   function removeStep(stepId: string) {
     const newRoutine = routine.filter(s => s.stepId !== stepId)
@@ -215,9 +222,18 @@ export default function ChoreoPage() {
     }
 
     // Scenario 2: Adding new figure from panel
-    if (over?.id === "routine-droppable") {
-      const figure = figures.find(f => f.id === draggedId)
-      if (figure) {
+    const figure = figures.find(f => f.id === draggedId)
+    if (figure) {
+      // If dropped over a step, insert before that step
+      if (over?.id && over.id !== "routine-droppable") {
+        const targetIndex = routine.findIndex(s => s.stepId === over.id)
+        if (targetIndex !== -1) {
+          addFigureAtIndex(figure, targetIndex)
+          return
+        }
+      }
+      // If dropped in empty space or on the droppable zone, add at the end
+      if (over?.id === "routine-droppable") {
         addFigure(figure)
       }
     }
