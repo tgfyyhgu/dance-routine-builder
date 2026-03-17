@@ -146,34 +146,45 @@ export default function RoutinePlayer({
     }
   }, [videoId, step?.figure.start_time, step?.figure.end_time, currentStep, steps.length, onStepChange, playerId, repeatMode])
 
-  // Monitor video time and pause at endTime (let onStateChange handle the repeat logic)
+  // Handle end_time by setting a timer for the exact clip duration
+  // This is more reliable than polling - we know exactly when the clip ends
   useEffect(() => {
-    if (!playerInstanceRef.current || !step?.figure.end_time) return
+    if (!playerInstanceRef.current || !playing || !step) return
 
-    const endTime = step.figure.end_time
-    let alreadyPaused = false
+    const startTime = step.figure.start_time || 0
+    const endTime = step.figure.end_time || 0
     
-    const interval = setInterval(() => {
-      try {
-        if (!playerInstanceRef.current?.getCurrentTime) return
-        
-        const currentTime = playerInstanceRef.current.getCurrentTime()
-        if (typeof currentTime === 'number' && currentTime >= endTime && !alreadyPaused) {
-          alreadyPaused = true
-          // Just pause - let the onStateChange listener handle the repeat logic
-          playerInstanceRef.current?.pauseVideo()
-          console.log(`[RoutinePlayer] Paused at endTime ${endTime}s`)
-        }
-      } catch {
-        // Ignore errors
-      }
-    }, 100)
+    // If end_time is not set or is invalid, don't set up timer
+    if (endTime <= startTime) return
 
-    return () => {
-      clearInterval(interval)
-      alreadyPaused = false
-    }
-  }, [videoId, step?.figure.end_time])
+    const clipDuration = endTime - startTime
+    const timeoutMs = clipDuration * 1000
+
+    // Set timer to fire when clip duration is complete
+    const timeoutId = setTimeout(() => {
+      console.log(`[RoutinePlayer] Clip ended after ${clipDuration}s`)
+      
+      if (repeatMode === 'repeat1') {
+        // Repeat 1: Loop back to start of clip
+        playerInstanceRef.current?.seekTo(startTime)
+        playerInstanceRef.current?.pauseVideo()
+        setPlaying(false)
+      } else if (repeatMode === 'repeatAll') {
+        // Repeat All: Auto-advance to next step
+        playerInstanceRef.current?.pauseVideo()
+        setPlaying(false)
+        autoAdvancingRef.current = true
+        
+        if (currentStep < steps.length - 1) {
+          onStepChange(currentStep + 1)
+        } else {
+          onStepChange(0)
+        }
+      }
+    }, timeoutMs)
+
+    return () => clearTimeout(timeoutId)
+  }, [playing, repeatMode, currentStep, steps.length, onStepChange, step?.figure.start_time, step?.figure.end_time, step])
 
   function previous() {
     if (currentStep > 0) {
