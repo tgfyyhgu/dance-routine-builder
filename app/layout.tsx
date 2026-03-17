@@ -18,7 +18,7 @@ function Navigation() {
   if (loading) return null
 
   return (
-    <nav className="p-4 border-b flex justify-between items-center bg-white dark:bg-gray-900 text-gray-900 dark:text-white">
+    <nav className="sticky top-0 z-50 p-4 border-b flex justify-between items-center bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm">
       <Link href="/" className="font-bold text-lg">
         Dance Routine Builder
       </Link>
