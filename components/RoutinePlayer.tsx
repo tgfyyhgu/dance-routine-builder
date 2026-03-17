@@ -82,9 +82,21 @@ export default function RoutinePlayer({
       },
       events: {
         onReady: () => {
+          console.log(`[RoutinePlayer] onReady for ${step?.figure.name} (${videoId})`)
           // Just seek to start time and let YouTube settle like FigurePanel does
           // Don't call playVideo here - it causes issues with some videos
           playerInstanceRef.current?.seekTo(startTime)
+        },
+        onError: (event: { data: number }) => {
+          // 2 = invalid video ID, 5 = HTML5 player error, 100 = video not found, 101 = video not allowed to be played embedded, 150 = same as 101
+          const errorCodes: { [key: number]: string } = {
+            2: 'Invalid video ID',
+            5: 'HTML5 player error',
+            100: 'Video not found',
+            101: 'Video not allowed to be played embedded',
+            150: 'Video not allowed to be played embedded (same as 101)'
+          }
+          console.error(`[RoutinePlayer] YouTube Error for ${step?.figure.name} (${videoId}): ${errorCodes[event.data] || `Unknown error ${event.data}`}`)
         },
         onStateChange: (event: { data: number }) => {
           // 1 = playing, 2 = paused, 0 = ended
