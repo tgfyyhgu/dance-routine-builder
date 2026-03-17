@@ -112,7 +112,8 @@ export default function RoutinePlayer({
 
   // Handle auto-play for Repeat All mode when video loads from auto-advance
   useEffect(() => {
-    if (!playerInstanceRef.current) return
+    // Guard against calling playVideo before player is fully initialized
+    if (!playerInstanceRef.current?.playVideo) return
 
     if (autoAdvancingRef.current && repeatMode === 'repeatAll') {
       autoAdvancingRef.current = false // Reset flag
