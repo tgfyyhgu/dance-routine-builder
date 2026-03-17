@@ -88,9 +88,8 @@ export default function RoutinePlayer({
       playerVars: {
         controls: 0,
         autoplay: 0,
-        end: endTime,
-        // Don't set start here - we handle it manually in onReady with seekTo
-        // But end can stay - it just tells YouTube when to auto-stop the video
+        // Don't set start/end here - we handle them manually
+        // start conflicts with seekTo(), end doesn't work reliably
       },
       events: {
         onReady: () => {
@@ -154,6 +153,23 @@ export default function RoutinePlayer({
       // Cleanup will happen when this effect runs again with new videoId
     }
   }, [videoId, step?.figure.start_time, step?.figure.end_time, currentStep, steps.length, onStepChange, playerId, repeatMode])
+
+  // Monitor video time and pause at endTime since playerVars end doesn't work reliably
+  useEffect(() => {
+    if (!playerInstanceRef.current || !step?.figure.end_time) return
+
+    const endTime = step.figure.end_time
+    const interval = setInterval(() => {
+      const currentTime = playerInstanceRef.current?.getCurrentTime()
+      if (currentTime !== undefined && currentTime >= endTime) {
+        playerInstanceRef.current?.pauseVideo()
+        setPlaying(false)
+        console.log(`[RoutinePlayer] Paused at end time ${endTime}s`)
+      }
+    }, 100) // Check every 100ms
+
+    return () => clearInterval(interval)
+  }, [videoId, step?.figure.end_time])
 
   function previous() {
     if (currentStep > 0) {
