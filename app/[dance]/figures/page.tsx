@@ -115,7 +115,11 @@ export default function FiguresPage() {
           .from("figures")
           .delete()
           .eq("id", id)
-        if (error) console.error("Delete error:", error)
+        if (error) {
+          console.error("Delete error for id", id, ":", error)
+          alert(`Error deleting figure: ${error.message}`)
+          return
+        }
       }
 
       // UPDATE and INSERT
@@ -170,7 +174,20 @@ export default function FiguresPage() {
 
       }
 
-      setFigures(editedFigures)
+      // Reload figures from database to confirm all changes persisted
+      const { data } = await supabase
+        .from("figures")
+        .select("*")
+        .eq("dance_style", dance)
+
+      if (data) {
+        const cleanedData = data.map(fig => ({
+          ...fig,
+          youtube_url: cleanYouTubeUrl(fig.youtube_url)
+        }))
+        setFigures(cleanedData)
+      }
+      
       setEditMode(false)
       alert("Changes saved successfully!")
 
