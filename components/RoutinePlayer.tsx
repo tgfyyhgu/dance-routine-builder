@@ -10,7 +10,8 @@ import { RoutineStep } from "@/types/routine"
 interface Props {
   readonly steps: RoutineStep[]
   readonly currentStep: number
-  readonly onStepChange: (index: number) => void
+  readonly onStepChange: (index: number, fromClick?: boolean) => void
+  readonly stepClickedFromBuilder?: boolean
 }
 
 declare global {
@@ -31,7 +32,7 @@ interface YTPlayer {
   getCurrentTime: () => number
 }
 
-export default function RoutinePlayer({ steps, currentStep, onStepChange }: Props) {
+export default function RoutinePlayer({ steps, currentStep, onStepChange, stepClickedFromBuilder }: Props) {
   const [autoplay, setAutoplay] = useState(false)
   const [playing, setPlaying] = useState(false)
   const playerRef = useRef<HTMLDivElement>(null)
@@ -89,8 +90,14 @@ export default function RoutinePlayer({ steps, currentStep, onStepChange }: Prop
       events: {
         onReady: () => {
           playerInstanceRef.current?.seekTo(startTime)
-          playerInstanceRef.current?.pauseVideo()
-          setPlaying(false)
+          // If step was clicked from builder and autoplay is on, start playing
+          if (stepClickedFromBuilder && autoplay) {
+            playerInstanceRef.current?.playVideo()
+            setPlaying(true)
+          } else {
+            playerInstanceRef.current?.pauseVideo()
+            setPlaying(false)
+          }
         },
         onStateChange: (event: { data: number }) => {
           // 1 = playing, 2 = paused, 0 = ended
@@ -107,17 +114,17 @@ export default function RoutinePlayer({ steps, currentStep, onStepChange }: Prop
     return () => {
       // Cleanup will happen when this effect runs again with new videoId
     }
-  }, [videoId, step?.figure.start_time, step?.figure.end_time, currentStep, steps.length, onStepChange, playerId])
-
-  function next() {
-    if (currentStep < steps.length - 1) {
-      onStepChange(currentStep + 1)
-    }
-  }
+  }, [videoId, step?.figure.start_time, step?.figure.end_time, currentStep, steps.length, onStepChange, playerId, stepClickedFromBuilder, autoplay])
 
   function previous() {
     if (currentStep > 0) {
-      onStepChange(currentStep - 1)
+      onStepChange(currentStep - 1, false)
+    }
+  }
+
+  function next() {
+    if (currentStep < steps.length - 1) {
+      onStepChange(currentStep + 1, false)
     }
   }
 
@@ -159,7 +166,7 @@ export default function RoutinePlayer({ steps, currentStep, onStepChange }: Prop
     }
   }
 
-  // Auto-advance after video duration
+  // Auto-advance after video duration (only if not manually navigated)
   useEffect(() => {
     if (!autoplay || !videoId || !step || currentStep >= steps.length - 1) return
 
@@ -167,7 +174,7 @@ export default function RoutinePlayer({ steps, currentStep, onStepChange }: Prop
     if (videoDuration <= 0) return
 
     const timer = setTimeout(() => {
-      onStepChange(currentStep + 1)
+      onStepChange(currentStep + 1, false)
     }, videoDuration * 1000)
 
     return () => clearTimeout(timer)
@@ -221,66 +228,60 @@ export default function RoutinePlayer({ steps, currentStep, onStepChange }: Prop
             </div>
           )}
 
-          {/* Control buttons - always at bottom */}
+          {/* Control buttons - optimized and always at bottom */}
           <div className="grow-0 space-y-2">
-            {/* Primary controls row */}
-            <div className="flex gap-2">
-              <button
-                onClick={() => setAutoplay(!autoplay)}
-                className={`flex-1 px-3 py-2 rounded transition-colors text-xs font-medium ${
-                  autoplay
-                    ? "bg-gray-500 dark:bg-gray-700 text-white hover:bg-gray-600 dark:hover:bg-gray-600"
-                    : "bg-gray-600 dark:bg-gray-700 text-white hover:bg-gray-700 dark:hover:bg-gray-600"
-                }`}
-              >
-                {autoplay ? "⏸ Manual" : "▶ Auto"}
-              </button>
-              <button
-                onClick={restart}
-                className="flex-1 bg-gray-500 dark:bg-gray-700 text-white px-3 py-2 rounded hover:bg-gray-600 dark:hover:bg-gray-600 transition-colors text-xs disabled:opacity-50"
-                disabled={currentStep === 0}
-              >
-                ↻ Restart
-              </button>
-            </div>
-
-            {/* Playback controls row */}
+            {/* Main playback controls */}
             <div className="flex gap-2">
               <button
                 onClick={togglePlay}
-                className="flex-1 bg-blue-600 dark:bg-blue-700 text-white px-3 py-2 rounded hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors text-xs font-medium"
+                className="flex-1 bg-blue-600 dark:bg-blue-700 text-white px-3 py-2 rounded hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors text-sm font-medium"
               >
                 {playing ? "⏸ Pause" : "▶ Play"}
               </button>
               <button
                 onClick={replayCurrent}
-                className="flex-1 bg-gray-600 dark:bg-gray-700 text-white px-3 py-2 rounded hover:bg-gray-700 dark:hover:bg-gray-600 transition-colors text-xs"
+                className="flex-1 bg-gray-600 dark:bg-gray-700 text-white px-3 py-2 rounded hover:bg-gray-700 dark:hover:bg-gray-600 transition-colors text-sm"
+                title="Start from beginning"
               >
-                ↻ Replay Clip
-              </button>
-              <button
-                onClick={toggleFullscreen}
-                className="flex-1 bg-gray-600 dark:bg-gray-700 text-white px-3 py-2 rounded hover:bg-gray-700 dark:hover:bg-gray-600 transition-colors text-xs"
-              >
-                ⛶ Fullscreen
+                ↻ Restart
               </button>
             </div>
 
-            {/* Navigation controls row */}
+            {/* Navigation and mode controls */}
             <div className="flex gap-2">
               <button
                 onClick={previous}
-                className="flex-1 bg-gray-500 dark:bg-gray-700 text-white px-3 py-2 rounded hover:bg-gray-600 dark:hover:bg-gray-600 transition-colors text-xs disabled:opacity-50"
+                className="px-2 py-2 bg-gray-600 dark:bg-gray-700 text-white rounded hover:bg-gray-700 dark:hover:bg-gray-600 transition-colors text-sm disabled:opacity-50"
                 disabled={currentStep === 0}
+                title="Previous step"
               >
-                ← Previous
+                ←
               </button>
               <button
                 onClick={next}
-                className="flex-1 bg-blue-600 dark:bg-blue-700 text-white px-3 py-2 rounded hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors text-xs disabled:opacity-50"
+                className="px-2 py-2 bg-blue-600 dark:bg-blue-700 text-white rounded hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors text-sm disabled:opacity-50"
                 disabled={currentStep >= steps.length - 1}
+                title="Next step"
               >
-                Next →
+                →
+              </button>
+              <button
+                onClick={() => setAutoplay(!autoplay)}
+                className={`flex-1 px-3 py-2 rounded transition-colors text-sm font-medium ${
+                  autoplay
+                    ? "bg-green-600 dark:bg-green-700 text-white hover:bg-green-700 dark:hover:bg-green-600"
+                    : "bg-gray-600 dark:bg-gray-700 text-white hover:bg-gray-700 dark:hover:bg-gray-600"
+                }`}
+                title="Toggle auto-advance"
+              >
+                {autoplay ? "🔄 Auto" : "⏸ Manual"}
+              </button>
+              <button
+                onClick={toggleFullscreen}
+                className="px-2 py-2 bg-gray-600 dark:bg-gray-700 text-white rounded hover:bg-gray-700 dark:hover:bg-gray-600 transition-colors text-sm"
+                title="Fullscreen"
+              >
+                ⛶
               </button>
             </div>
           </div>
@@ -303,34 +304,32 @@ export default function RoutinePlayer({ steps, currentStep, onStepChange }: Prop
             </div>
           )}
 
-          {/* Control buttons - always at bottom */}
+          {/* Control buttons - optimized for no video */}
           <div className="grow-0 space-y-2">
-            {/* Primary controls row */}
-            <div className="flex gap-2">
-              <button
-                onClick={restart}
-                className="flex-1 bg-gray-500 text-white px-3 py-2 rounded hover:bg-gray-600 transition-colors text-xs disabled:opacity-50"
-                disabled={currentStep === 0}
-              >
-                ↻ Restart
-              </button>
-            </div>
-
-            {/* Navigation controls row */}
             <div className="flex gap-2">
               <button
                 onClick={previous}
-                className="flex-1 bg-gray-500 text-white px-3 py-2 rounded hover:bg-gray-600 transition-colors text-xs disabled:opacity-50"
+                className="px-2 py-2 bg-gray-600 dark:bg-gray-700 text-white rounded hover:bg-gray-700 dark:hover:bg-gray-600 transition-colors text-sm disabled:opacity-50"
                 disabled={currentStep === 0}
+                title="Previous step"
               >
-                ← Previous
+                ←
               </button>
               <button
                 onClick={next}
-                className="flex-1 bg-blue-600 text-white px-3 py-2 rounded hover:bg-blue-700 transition-colors text-xs disabled:opacity-50"
+                className="px-2 py-2 bg-blue-600 dark:bg-blue-700 text-white rounded hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors text-sm disabled:opacity-50"
                 disabled={currentStep >= steps.length - 1}
+                title="Next step"
               >
-                Next →
+                →
+              </button>
+              <button
+                onClick={() => onStepChange(0, false)}
+                className="flex-1 px-3 py-2 bg-gray-600 dark:bg-gray-700 text-white rounded hover:bg-gray-700 dark:hover:bg-gray-600 transition-colors text-sm disabled:opacity-50"
+                disabled={currentStep === 0}
+                title="Go to first step"
+              >
+                ↻ Restart
               </button>
             </div>
           </div>
