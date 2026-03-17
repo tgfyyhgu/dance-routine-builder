@@ -166,7 +166,7 @@ export default function FiguresPage() {
   }
 
   return (
-    <main className="min-h-screen bg-gray-50 dark:bg-gray-950">
+    <main className="bg-gray-50 dark:bg-gray-950">
       {/* Navigation Header */}
       <div className="border-b bg-white dark:bg-gray-900 dark:border-gray-800 px-6 py-4 flex justify-between items-center">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{dance.toUpperCase()} - Manage Figures</h1>

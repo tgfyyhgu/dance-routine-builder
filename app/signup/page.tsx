@@ -54,7 +54,7 @@ export default function SignupPage() {
 
   if (success) {
     return (
-      <div className="max-w-md mx-auto mt-8 p-6 border dark:border-gray-700 rounded-lg bg-green-50 dark:bg-gray-900">
+      <div className="max-w-md mx-auto my-8 p-6 border dark:border-gray-700 rounded-lg bg-green-50 dark:bg-gray-900">
         <h1 className="text-2xl font-bold mb-4 text-green-700 dark:text-green-400">Account Created!</h1>
         <p className="text-green-600 dark:text-green-400">Redirecting to login...</p>
       </div>
@@ -62,7 +62,7 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="max-w-md mx-auto mt-8 p-6 border dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white">
+    <div className="max-w-md mx-auto my-8 p-6 border dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white">
       <h1 className="text-2xl font-bold mb-6">Sign Up</h1>
 
       <form onSubmit={handleSignup} className="space-y-4">

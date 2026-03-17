@@ -224,14 +224,14 @@ export default function MyRoutinesPage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center">
+      <main className="bg-gray-50 dark:bg-gray-950 flex items-center justify-center p-6 min-h-[60vh]">
         <p className="text-lg text-gray-600 dark:text-gray-400">Loading routines...</p>
       </main>
     )
   }
 
   return (
-    <main className="min-h-screen bg-gray-50 dark:bg-gray-950 py-12 px-6">
+    <main className="bg-gray-50 dark:bg-gray-950 py-12 px-6">
       <div className="max-w-4xl mx-auto">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-4xl font-bold text-gray-900 dark:text-white">My Routines</h1>

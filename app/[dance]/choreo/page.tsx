@@ -442,7 +442,7 @@ export default function ChoreoPage() {
 
   return (
     <DndContext collisionDetection={pointerWithin} onDragEnd={handleDragEnd}>
-      <div className="flex h-screen flex-col bg-white dark:bg-gray-950">
+      <div className="flex flex-col bg-white dark:bg-gray-950">
         {/* Header */}
         <div className="border-b dark:border-gray-800 bg-white dark:bg-gray-900 px-6 py-3">
           <div className="flex justify-between items-center">
