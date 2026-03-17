@@ -7,6 +7,17 @@
 import { useState, useEffect, useRef, useId } from "react"
 import { RoutineStep, YTPlayer } from "@/types/routine"
 
+// Helper to clean YouTube URLs (remove playlist parameters that prevent embedding)
+function cleanYouTubeUrl(url: string): string {
+  if (!url) return url
+  const regExp = /^.*(?:youtu\.be\/|watch\?v=)([^#&?]*).*/
+  const videoId = regExp.exec(url)?.[1]
+  if (videoId) {
+    return `https://www.youtube.com/watch?v=${videoId}`
+  }
+  return url
+}
+
 interface Props {
   readonly steps: RoutineStep[]
   readonly currentStep: number
@@ -33,8 +44,10 @@ export default function RoutinePlayer({
   const regExp =
     /^.*(?:youtu\.be\/|watch\?v=)([^#&?]*).*/
 
-  const videoId = step?.figure.youtube_url 
-    ? (regExp.exec(step.figure.youtube_url)?.[1] ?? null)
+  // Clean the URL to remove playlist parameters, then extract video ID
+  const cleanedUrl = step?.figure.youtube_url ? cleanYouTubeUrl(step.figure.youtube_url) : null
+  const videoId = cleanedUrl 
+    ? (regExp.exec(cleanedUrl)?.[1] ?? null)
     : null
 
   // Load YouTube API script
@@ -66,26 +79,43 @@ export default function RoutinePlayer({
       height: "100%",
       playerVars: {
         controls: 0,
-        start: startTime,
-        end: endTime,
         autoplay: 0,
+        // Don't set start/end here - we handle them manually
+        // start conflicts with seekTo(), end doesn't work reliably
       },
       events: {
         onReady: () => {
-          playerInstanceRef.current?.seekTo(startTime)
-          // Auto-play if this is a Repeat All auto-advance, otherwise pause (user click override)
-          if (autoAdvancingRef.current && repeatMode === 'repeatAll') {
-            autoAdvancingRef.current = false // Reset flag
-            playerInstanceRef.current?.playVideo()
-            setPlaying(true)
-          } else {
-            playerInstanceRef.current?.pauseVideo()
-            setPlaying(false)
+          console.log(`[RoutinePlayer] onReady for ${step?.figure.name} (${videoId}), seeking to ${startTime}s, end at ${endTime}s`)
+          try {
+            playerInstanceRef.current?.seekTo(startTime)
+            console.log(`[RoutinePlayer] seekTo completed successfully`)
+          } catch (e) {
+            console.error(`[RoutinePlayer] seekTo failed:`, e)
           }
         },
+        onError: (event: { data: number }) => {
+          // 2 = invalid video ID, 5 = HTML5 player error, 100 = video not found, 101 = video not allowed to be played embedded, 150 = same as 101
+          const errorCodes: { [key: number]: string } = {
+            2: 'Invalid video ID',
+            5: 'HTML5 player error',
+            100: 'Video not found',
+            101: 'Video not allowed to be played embedded',
+            150: 'Video not allowed to be played embedded (same as 101)'
+          }
+          console.error(`[RoutinePlayer] YouTube Error for ${step?.figure.name} (${videoId}): ${errorCodes[event.data] || `Unknown error ${event.data}`}`)
+        },
         onStateChange: (event: { data: number }) => {
-          // 1 = playing, 2 = paused, 0 = ended
+          // -1 = unstarted, 0 = ended, 1 = playing, 2 = paused, 3 = buffering, 5 = cued/ready
+          const stateNames: { [key: number]: string } = { '-1': 'unstarted', '0': 'ended', '1': 'playing', '2': 'paused', '3': 'buffering', '5': 'cued' }
+          console.log(`[RoutinePlayer] onStateChange for ${step?.figure.name}: ${stateNames[event.data] || event.data}`)
           setPlaying(event.data === 1)
+          
+          // Handle auto-play for Repeat All right after video is ready to play
+          // but before user sees it (state change 2 = paused means video loaded and ready)
+          if (event.data === 2 && autoAdvancingRef.current && repeatMode === 'repeatAll') {
+            autoAdvancingRef.current = false
+            playerInstanceRef.current?.playVideo()
+          }
 
           // Handle end-of-video based on repeat mode
           if (event.data === 0) {
@@ -115,6 +145,35 @@ export default function RoutinePlayer({
       // Cleanup will happen when this effect runs again with new videoId
     }
   }, [videoId, step?.figure.start_time, step?.figure.end_time, currentStep, steps.length, onStepChange, playerId, repeatMode])
+
+  // Monitor video time and pause at endTime (let onStateChange handle the repeat logic)
+  useEffect(() => {
+    if (!playerInstanceRef.current || !step?.figure.end_time) return
+
+    const endTime = step.figure.end_time
+    let alreadyPaused = false
+    
+    const interval = setInterval(() => {
+      try {
+        if (!playerInstanceRef.current?.getCurrentTime) return
+        
+        const currentTime = playerInstanceRef.current.getCurrentTime()
+        if (typeof currentTime === 'number' && currentTime >= endTime && !alreadyPaused) {
+          alreadyPaused = true
+          // Just pause - let the onStateChange listener handle the repeat logic
+          playerInstanceRef.current?.pauseVideo()
+          console.log(`[RoutinePlayer] Paused at endTime ${endTime}s`)
+        }
+      } catch {
+        // Ignore errors
+      }
+    }, 100)
+
+    return () => {
+      clearInterval(interval)
+      alreadyPaused = false
+    }
+  }, [videoId, step?.figure.end_time])
 
   function previous() {
     if (currentStep > 0) {
@@ -175,14 +234,31 @@ export default function RoutinePlayer({
   }
 
   function toggleFullscreen() {
-    if (!playerRef.current) return
+    if (!playerRef.current) {
+      console.warn('[RoutinePlayer] Cannot fullscreen: playerRef is not available')
+      return
+    }
 
-    if (document.fullscreenElement) {
-      document.exitFullscreen()
-    } else {
-      playerRef.current.requestFullscreen().catch((err) => {
-        console.error(`Error attempting to enable fullscreen:`, err)
-      })
+    // Check if the element is still connected to the DOM
+    if (!playerRef.current.isConnected) {
+      console.warn('[RoutinePlayer] Cannot fullscreen: element is not connected to DOM')
+      return
+    }
+
+    try {
+      if (document.fullscreenElement) {
+        document.exitFullscreen().catch((err) => {
+          console.warn(`[RoutinePlayer] Could not exit fullscreen: ${(err as Error).message}`)
+        })
+      } else {
+        // Request fullscreen on the player container
+        playerRef.current.requestFullscreen({ navigationUI: 'hide' }).catch((err) => {
+          console.warn(`[RoutinePlayer] Fullscreen not available: ${(err as Error).message}`)
+          // Common reasons: browser policy, user gesture required, element not in focus
+        })
+      }
+    } catch (err) {
+      console.warn(`[RoutinePlayer] Fullscreen error: ${(err as Error).message}`)
     }
   }
 
@@ -232,8 +308,8 @@ export default function RoutinePlayer({
           
           {/* Notes section with scroll if needed */}
           {step.figure.note && (
-            <div className="max-h-32 overflow-y-auto mb-3 p-2 bg-gray-50 rounded text-xs border border-gray-200">
-              <p className="text-gray-700">{step.figure.note}</p>
+            <div className="max-h-32 overflow-y-auto mb-3 p-2 bg-gray-100 dark:bg-gray-800 rounded text-xs border border-gray-300 dark:border-gray-700">
+              <p className="text-gray-800 dark:text-gray-100">{step.figure.note}</p>
             </div>
           )}
 
@@ -293,6 +369,8 @@ export default function RoutinePlayer({
                 ⛶
               </button>
             </div>
+
+
           </div>
         </div>
       )}
@@ -308,8 +386,8 @@ export default function RoutinePlayer({
 
           {/* Notes section with scroll if needed */}
           {step.figure.note && (
-            <div className="max-h-32 overflow-y-auto mb-3 p-2 bg-gray-50 rounded text-xs border border-gray-200">
-              <p className="text-gray-700">{step.figure.note}</p>
+            <div className="max-h-32 overflow-y-auto mb-3 p-2 bg-gray-100 dark:bg-gray-800 rounded text-xs border border-gray-300 dark:border-gray-700">
+              <p className="text-gray-800 dark:text-gray-100">{step.figure.note}</p>
             </div>
           )}
 

@@ -18,6 +18,21 @@ interface Figure {
   dance_style: string
 }
 
+// Helper function to clean YouTube URLs by removing playlist parameters
+function cleanYouTubeUrl(url: string): string {
+  if (!url) return url
+  
+  // Extract video ID using the same regex as RoutinePlayer
+  const regExp = /^.*(?:youtu\.be\/|watch\?v=)([^#&?]*).*/
+  const videoId = regExp.exec(url)?.[1]
+  
+  // If we found a video ID, return clean URL; otherwise return original
+  if (videoId) {
+    return `https://www.youtube.com/watch?v=${videoId}`
+  }
+  return url
+}
+
 export default function FiguresPage() {
   const params = useParams()
   const dance = params.dance as string
@@ -34,7 +49,12 @@ export default function FiguresPage() {
         .eq("dance_style", dance)
 
       if (data) {
-        setFigures(data)
+        // Clean YouTube URLs for all figures (handles old figures with playlist params)
+        const cleanedData = data.map(fig => ({
+          ...fig,
+          youtube_url: cleanYouTubeUrl(fig.youtube_url)
+        }))
+        setFigures(cleanedData)
       }
     }
     loadFigures()
@@ -95,11 +115,17 @@ export default function FiguresPage() {
           .from("figures")
           .delete()
           .eq("id", id)
-        if (error) console.error("Delete error:", error)
+        if (error) {
+          console.error("Delete error for id", id, ":", error)
+          alert(`Error deleting figure: ${error.message}`)
+          return
+        }
       }
 
       // UPDATE and INSERT
       for (const fig of editedFigures) {
+        // Clean YouTube URL before saving (removes playlist parameters that prevent embedding)
+        const cleanUrl = cleanYouTubeUrl(fig.youtube_url)
 
         if (originalIds.includes(fig.id)) {
 
@@ -110,7 +136,7 @@ export default function FiguresPage() {
               name: fig.name,
               difficulty: fig.difficulty,
               note: fig.note,
-              youtube_url: fig.youtube_url,
+              youtube_url: cleanUrl,
               start_time: fig.start_time,
               end_time: fig.end_time
             })
@@ -132,7 +158,7 @@ export default function FiguresPage() {
               name: fig.name,
               difficulty: fig.difficulty,
               note: fig.note,
-              youtube_url: fig.youtube_url,
+              youtube_url: cleanUrl,
               start_time: fig.start_time,
               end_time: fig.end_time,
               dance_style: dance
@@ -148,7 +174,20 @@ export default function FiguresPage() {
 
       }
 
-      setFigures(editedFigures)
+      // Reload figures from database to confirm all changes persisted
+      const { data } = await supabase
+        .from("figures")
+        .select("*")
+        .eq("dance_style", dance)
+
+      if (data) {
+        const cleanedData = data.map(fig => ({
+          ...fig,
+          youtube_url: cleanYouTubeUrl(fig.youtube_url)
+        }))
+        setFigures(cleanedData)
+      }
+      
       setEditMode(false)
       alert("Changes saved successfully!")
 
@@ -219,15 +258,41 @@ export default function FiguresPage() {
 
       {!editMode && (
         <div className="flex justify-between mb-4">
-          <button
-            className="bg-yellow-500 dark:bg-yellow-600 text-white px-4 py-2 rounded hover:bg-yellow-600 dark:hover:bg-yellow-700 transition-colors font-medium"
-            onClick={() => {
-              setEditedFigures(figures)
-              setEditMode(true)
-            }}
-          >
-            Edit
-          </button>
+          <div className="flex gap-2">
+            <button
+              className="bg-yellow-500 dark:bg-yellow-600 text-white px-4 py-2 rounded hover:bg-yellow-600 dark:hover:bg-yellow-700 transition-colors font-medium"
+              onClick={() => {
+                setEditedFigures(figures)
+                setEditMode(true)
+              }}
+            >
+              Edit
+            </button>
+            <button
+              className="bg-green-600 dark:bg-green-700 text-white px-4 py-2 rounded hover:bg-green-700 dark:hover:bg-green-600 transition-colors font-medium text-sm"
+              onClick={async () => {
+                if (!confirm("This will update all figures in the database to use clean YouTube URLs (removing playlist parameters). This fixes videos that won't embed. Continue?")) return
+                
+                let cleaned = 0
+                for (const fig of figures) {
+                  const cleanUrl = cleanYouTubeUrl(fig.youtube_url)
+                  if (cleanUrl !== fig.youtube_url) {
+                    const { error } = await supabase
+                      .from("figures")
+                      .update({ youtube_url: cleanUrl })
+                      .eq("id", fig.id)
+                    if (!error) cleaned++
+                  }
+                }
+                alert(`Cleaned ${cleaned} figures with playlist parameters`)
+                // Reload
+                window.location.reload()
+              }}
+              title="Clean YouTube URLs in database (removes playlist params that prevent embedding)"
+            >
+              Clean URLs
+            </button>
+          </div>
           <div className="flex gap-4">
             <button
               className="bg-blue-500 dark:bg-blue-700 text-white px-4 py-2 rounded hover:bg-blue-600 dark:hover:bg-blue-600 transition-colors font-medium"

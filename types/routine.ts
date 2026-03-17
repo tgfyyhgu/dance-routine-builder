@@ -131,6 +131,7 @@ export interface YTPlayer {
   pauseVideo: () => void
   seekTo: (seconds: number) => void
   setPlaybackRate: (rate: number) => void
+  getAvailablePlaybackRates?: () => number[]
   destroy: () => void
   getCurrentTime: () => number
 }
