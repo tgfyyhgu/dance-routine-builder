@@ -30,9 +30,9 @@ interface Props {
   readonly saveStatus?: string | null
   readonly fileInputRef?: React.RefObject<HTMLInputElement | null>
   // Sharing
-  readonly visibility?: 'private' | 'shared' | 'public'
+  readonly visibility?: 'private' | 'public'
   readonly shareToken?: string | null
-  readonly onVisibilityChange?: (visibility: 'private' | 'shared' | 'public') => Promise<void>
+  readonly onVisibilityChange?: (visibility: 'private' | 'public') => Promise<void>
   readonly onCreateShare?: () => Promise<void>
   readonly onRevokeShare?: () => Promise<void>
   readonly shareUrl?: string | null

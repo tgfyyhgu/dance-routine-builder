@@ -53,7 +53,7 @@ export default function ChoreoPage() {
   const [routineId, setRoutineId] = useState<string | null>(null)  // null = new routine, string = saved to Supabase
   
   // Sharing state
-  const [visibility, setVisibility] = useState<'private' | 'shared' | 'public'>('private')
+  const [visibility, setVisibility] = useState<'private' | 'public'>('private')
   const [shareToken, setShareToken] = useState<string | null>(null)
   const [shareUrl, setShareUrl] = useState<string | null>(null)
   const [isSharing, setIsSharing] = useState(false)
@@ -487,7 +487,7 @@ export default function ChoreoPage() {
     }
   }
 
-  async function handleVisibilityChange(newVisibility: 'private' | 'shared' | 'public') {
+  async function handleVisibilityChange(newVisibility: 'private' | 'public') {
     if (!routineId) {
       alert("Save the routine first before sharing")
       return
@@ -514,13 +514,6 @@ export default function ChoreoPage() {
     }
     try {
       setIsSharing(true)
-      
-      // If private, auto-upgrade to 'shared' when creating a share link
-      if (visibility === 'private') {
-        await updateRoutineVisibility(routineId, 'shared')
-        setVisibility('shared')
-      }
-      
       const { token, url } = await createShareLink(routineId, user?.id || "", visibility === 'public')
       setShareToken(token)
       setShareUrl(url)

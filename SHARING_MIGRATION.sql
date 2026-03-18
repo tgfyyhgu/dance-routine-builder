@@ -51,7 +51,7 @@ CREATE INDEX shares_created_by_idx ON shares(created_by);
 
 -- Add visibility column if not exists
 ALTER TABLE routines ADD COLUMN visibility varchar(20) DEFAULT 'private' 
-  CHECK (visibility IN ('private', 'shared', 'public'));
+  CHECK (visibility IN ('private', 'public'));
 
 -- Add based_on_id to track lineage (for copies)
 ALTER TABLE routines ADD COLUMN based_on_id uuid;
@@ -71,7 +71,7 @@ ALTER TABLE routines
 
 -- Add visibility column
 ALTER TABLE figures ADD COLUMN visibility varchar(20) DEFAULT 'private'
-  CHECK (visibility IN ('private', 'shared', 'public'));
+  CHECK (visibility IN ('private', 'public'));
 
 
 
@@ -101,13 +101,18 @@ CREATE POLICY shares_update_own
   USING (created_by = auth.uid());
 
 
--- ROUTINES TABLE: Anyone can read if shared/public or owner
+-- ROUTINES TABLE: Anyone can read if: owner, public, or shared via link
 CREATE POLICY routines_read_own_or_shared
   ON routines FOR SELECT
   USING (
     user_id = auth.uid() OR 
-    visibility = 'shared' OR 
-    visibility = 'public'
+    visibility = 'public' OR
+    -- Allow reading if a valid share link exists for this routine
+    EXISTS (
+      SELECT 1 FROM shares 
+      WHERE shares.resource_id = routines.id 
+        AND shares.type = 'routine'
+    )
   );
 
 -- ROUTINES TABLE: Only owner can update

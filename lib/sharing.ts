@@ -151,7 +151,7 @@ export async function copyRoutineToOwn(
  */
 export async function updateRoutineVisibility(
   routineId: string,
-  visibility: 'private' | 'shared' | 'public'
+  visibility: 'private' | 'public'
 ): Promise<void> {
   const { error } = await supabase
     .from('routines')
@@ -202,15 +202,26 @@ export async function getSharedRoutineByToken(token: string) {
       throw new Error('This share link has expired')
     }
     
-    // Fetch the routine
+    // Fetch the routine (simplified select)
     const { data: routine, error } = await supabase
       .from('routines')
-      .select('*, shares!based_on_id(id, name, user_id)')
+      .select('*')
       .eq('id', share.resource_id)
       .single()
     
     if (error || !routine) {
-      throw new Error('Routine not found')
+      throw new Error(`Routine not found: ${error?.message || 'No data returned'}`)
+    }
+    
+    // Fetch original routine info if this is a copy
+    let originalRoutine = null
+    if (routine.based_on_id) {
+      const { data: original } = await supabase
+        .from('routines')
+        .select('id, name, user_id')
+        .eq('id', routine.based_on_id)
+        .single()
+      originalRoutine = original
     }
     
     // Increment view count
@@ -225,7 +236,7 @@ export async function getSharedRoutineByToken(token: string) {
     return {
       routine,
       share,
-      original: routine.shares?.[0] || null,  // Info about original if this is a copy
+      original: originalRoutine,
     }
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error'

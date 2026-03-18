@@ -122,8 +122,9 @@ export interface Routine {
   // Owner's user ID (Supabase auth user)
   user_id?: string
 
-  // Visibility: private (only owner), shared (link-only), public (discoverable)
-  visibility?: 'private' | 'shared' | 'public'
+  // Visibility: private (only owner), public (anyone can view)
+  // Share links allow viewing regardless of visibility setting
+  visibility?: 'private' | 'public'
 
   // If this routine was copied from a shared routine, this points to the original
   // Used to show attribution/lineage
