@@ -214,14 +214,16 @@ export default function FiguresPage() {
   return (
     <main className="bg-gray-50 dark:bg-gray-950">
       {/* Navigation Header */}
-      <div className="border-b bg-white dark:bg-gray-900 dark:border-gray-800 px-6 py-4 flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{dance.toUpperCase()} - Manage Figures</h1>
-        <Link 
-          href={`/${dance}/choreo`}
-          className="bg-blue-500 dark:bg-blue-700 text-white px-4 py-2 rounded hover:bg-blue-600 dark:hover:bg-blue-600 transition-colors font-medium"
-        >
-          🎬 Choreography Builder
-        </Link>
+      <div className="border-b dark:border-gray-800 bg-white dark:bg-gray-900 px-6 py-3">
+        <div className="flex justify-between items-center">
+          <h1 className="text-lg font-bold text-gray-900 dark:text-white">{dance.toUpperCase()} - Manage Figures</h1>
+          <Link 
+            href={`/${dance}/choreo`}
+            className="bg-blue-500 dark:bg-blue-700 text-white px-2 py-1 rounded hover:bg-blue-600 dark:hover:bg-blue-600 transition-colors font-medium text-xs"
+          >
+            🎬 Choreography Builder
+          </Link>
+        </div>
       </div>
 
       <div className="p-10">
