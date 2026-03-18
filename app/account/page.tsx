@@ -67,7 +67,7 @@ export default function AccountPage() {
       if (!response.ok) {
         const error = await response.json()
         console.error('Error deleting account:', error)
-        setDeleteStatus('❌ Failed to delete account')
+        setDeleteStatus(`❌ ${error.error || 'Failed to delete account'}`)
         setIsDeleting(false)
         return
       }
