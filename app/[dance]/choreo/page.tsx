@@ -125,12 +125,31 @@ export default function ChoreoPage() {
           setRoutineName(data.name)
           setRoutine(data.steps || [])
           setVisibility(data.visibility || 'private')
-          setShareToken(data.shareToken || null)
           lastSavedStateRef.current = data.steps || []
           setHistory([])
           setFuture([])
           setCurrentStep(0)
           setHasUnsavedChanges(false)
+          
+          // Load existing share token if it exists
+          try {
+            const { data: shareData } = await supabase
+              .from('shares')
+              .select('token')
+              .eq('resource_id', data.id)
+              .eq('type', 'routine')
+              .single()
+            
+            if (shareData) {
+              setShareToken(shareData.token)
+              setShareUrl(`${window.location.origin}/share/${shareData.token}`)
+            }
+          } catch (err) {
+            // No share exists, that's fine
+            setShareToken(null)
+            setShareUrl(null)
+          }
+          
           setSaveStatus("✓ Routine loaded")
           setTimeout(() => setSaveStatus(null), 2000)
         }

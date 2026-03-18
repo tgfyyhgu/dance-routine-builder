@@ -5,6 +5,7 @@
  */
 "use client"
 
+import { useState } from "react"
 // Drag & drop library - dnd-kit enables drag-to-reorder functionality
 import { useDroppable } from "@dnd-kit/core"
 import { SortableContext, verticalListSortingStrategy, useSortable } from "@dnd-kit/sortable"
@@ -193,6 +194,9 @@ export default function RoutineBuilder({
   shareUrl,
   isSharing,
 }: Props) {
+  // State for copy feedback message
+  const [copyFeedback, setCopyFeedback] = useState<string | null>(null)
+  
   // ============ dnd-kit: MAKE THIS A DROP ZONE ============
   // This component is the DROP TARGET for figures dragged from FigurePanel
   
@@ -345,11 +349,12 @@ export default function RoutineBuilder({
                     onClick={async () => {
                       const { copyToClipboard } = await import('@/lib/sharing')
                       await copyToClipboard(shareUrl)
-                      alert('Link copied!')
+                      setCopyFeedback('✅ Copied!')
+                      setTimeout(() => setCopyFeedback(null), 1500)
                     }}
                     className="bg-blue-600 dark:bg-blue-700 text-white px-2 py-1 rounded hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors text-xs font-medium whitespace-nowrap"
                   >
-                    📋 Copy
+                    {copyFeedback ? copyFeedback : '📋 Copy'}
                   </button>
                   {onRevokeShare && (
                     <button
