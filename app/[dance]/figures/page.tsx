@@ -124,8 +124,19 @@ export default function FiguresPage() {
 
     // Prompt for names if figures have data but no name
     if (incompleteFigures.length > 0) {
-      for (const fig of incompleteFigures) {
-        const name = prompt("This figure has data but no name. Please enter a name:", "")
+      for (let i = 0; i < incompleteFigures.length; i++) {
+        const fig = incompleteFigures[i]
+        
+        // Build identifying info for the prompt
+        const identifiers: string[] = []
+        if (fig.note?.trim()) identifiers.push(`Note: "${fig.note}"`)
+        if (fig.youtube_url?.trim()) identifiers.push("Has video")
+        if (fig.difficulty > 0) identifiers.push(`Difficulty: ${fig.difficulty}`)
+        const identifyingInfo = identifiers.length > 0 ? identifiers.join(" | ") : "Empty figure"
+        
+        const promptMsg = `Figure ${i + 1} of ${incompleteFigures.length}:\n${identifyingInfo}\n\nPlease enter a name:`
+        const name = prompt(promptMsg, "")
+        
         if (name === null) {
           // User cancelled - abort entire save
           return
