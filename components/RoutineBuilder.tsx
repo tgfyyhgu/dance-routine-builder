@@ -29,6 +29,14 @@ interface Props {
   readonly isSaving?: boolean
   readonly saveStatus?: string | null
   readonly fileInputRef?: React.RefObject<HTMLInputElement | null>
+  // Sharing
+  readonly visibility?: 'private' | 'shared' | 'public'
+  readonly shareToken?: string | null
+  readonly onVisibilityChange?: (visibility: 'private' | 'shared' | 'public') => Promise<void>
+  readonly onCreateShare?: () => Promise<void>
+  readonly onRevokeShare?: () => Promise<void>
+  readonly shareUrl?: string
+  readonly isSharing?: boolean
 }
 
 /**
@@ -177,6 +185,13 @@ export default function RoutineBuilder({
   routineId,
   handleNewRoutine,
   fileInputRef,
+  visibility,
+  shareToken,
+  onVisibilityChange,
+  onCreateShare,
+  onRevokeShare,
+  shareUrl,
+  isSharing,
 }: Props) {
   // ============ dnd-kit: MAKE THIS A DROP ZONE ============
   // This component is the DROP TARGET for figures dragged from FigurePanel
@@ -284,6 +299,85 @@ export default function RoutineBuilder({
             )}
             {saveStatus && (
               <span className="text-xs text-green-600 dark:text-green-400 font-semibold ml-auto">{saveStatus}</span>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ============ SECTION 2: SHARING CONTROLS ============ */}
+      {routineId && (
+        <div className="bg-purple-50 dark:bg-gray-800 border-b border-purple-200 dark:border-gray-700 p-2 mb-2 rounded">
+          <div className="flex gap-2 items-center flex-wrap text-xs">
+            <span className="font-semibold text-gray-700 dark:text-gray-300">Share:</span>
+            
+            {/* Visibility selector */}
+            <div className="flex gap-1">
+              <button
+                onClick={() => onVisibilityChange?.('private')}
+                disabled={isSharing}
+                className={`px-2 py-1 rounded text-xs font-medium transition-colors ${
+                  visibility === 'private'
+                    ? 'bg-gray-700 dark:bg-gray-600 text-white'
+                    : 'bg-gray-300 dark:bg-gray-600 text-gray-900 dark:text-gray-100 hover:bg-gray-400 dark:hover:bg-gray-500'
+                } disabled:opacity-50`}
+              >
+                🔒 Private
+              </button>
+              <button
+                onClick={() => onVisibilityChange?.('shared')}
+                disabled={isSharing}
+                className={`px-2 py-1 rounded text-xs font-medium transition-colors ${
+                  visibility === 'shared'
+                    ? 'bg-blue-600 dark:bg-blue-700 text-white'
+                    : 'bg-gray-300 dark:bg-gray-600 text-gray-900 dark:text-gray-100 hover:bg-gray-400 dark:hover:bg-gray-500'
+                } disabled:opacity-50`}
+              >
+                🔗 Link
+              </button>
+              <button
+                onClick={() => onVisibilityChange?.('public')}
+                disabled={isSharing}
+                className={`px-2 py-1 rounded text-xs font-medium transition-colors ${
+                  visibility === 'public'
+                    ? 'bg-green-600 dark:bg-green-700 text-white'
+                    : 'bg-gray-300 dark:bg-gray-600 text-gray-900 dark:text-gray-100 hover:bg-gray-400 dark:hover:bg-gray-500'
+                } disabled:opacity-50`}
+              >
+                🌍 Public
+              </button>
+            </div>
+
+            {/* Share button & URL display */}
+            {visibility === 'shared' && shareUrl && (
+              <>
+                <div className="flex-1 flex gap-2 items-center min-w-fit">
+                  <input
+                    type="text"
+                    value={shareUrl}
+                    readOnly
+                    className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-xs bg-white dark:bg-gray-700 text-gray-900 dark:text-white flex-1 min-w-48"
+                  />
+                  <button
+                    onClick={async () => {
+                      const { copyToClipboard } = await import('@/lib/sharing')
+                      await copyToClipboard(shareUrl)
+                      alert('Link copied!')
+                    }}
+                    className="bg-blue-600 dark:bg-blue-700 text-white px-2 py-1 rounded hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors text-xs font-medium whitespace-nowrap"
+                  >
+                    📋 Copy
+                  </button>
+                  {onRevokeShare && (
+                    <button
+                      onClick={onRevokeShare}
+                      disabled={isSharing}
+                      className="bg-red-600 dark:bg-red-700 text-white px-2 py-1 rounded hover:bg-red-700 dark:hover:bg-red-600 transition-colors text-xs font-medium whitespace-nowrap disabled:opacity-50"
+                    >
+                      🗑️ Revoke
+                    </button>
+                  )}
+                </div>
+              </>
             )}
           </div>
         </div>

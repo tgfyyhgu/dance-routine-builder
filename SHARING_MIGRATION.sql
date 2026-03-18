@@ -51,11 +51,14 @@ CREATE INDEX shares_created_by_idx ON shares(created_by);
 
 -- Add visibility column if not exists
 ALTER TABLE routines ADD COLUMN visibility varchar(20) DEFAULT 'private' 
-  CONSTRAINT visibility_check CHECK (visibility IN ('private', 'shared', 'public'));
+  CHECK (visibility IN ('private', 'shared', 'public'));
 
 -- Add based_on_id to track lineage (for copies)
-ALTER TABLE routines ADD COLUMN based_on_id uuid
-  CONSTRAINT based_on_fk FOREIGN KEY (based_on_id) REFERENCES routines(id) ON DELETE SET NULL;
+ALTER TABLE routines ADD COLUMN based_on_id uuid;
+
+-- Add foreign key constraint separately
+ALTER TABLE routines 
+  ADD CONSTRAINT based_on_fk FOREIGN KEY (based_on_id) REFERENCES routines(id) ON DELETE SET NULL;
 
 -- Add creation metadata if not exists (optional, but useful for tracking)
 -- ALTER TABLE routines ADD COLUMN is_original boolean DEFAULT TRUE;
@@ -68,7 +71,7 @@ ALTER TABLE routines ADD COLUMN based_on_id uuid
 
 -- Add visibility column
 ALTER TABLE figures ADD COLUMN visibility varchar(20) DEFAULT 'private'
-  CONSTRAINT figures_visibility_check CHECK (visibility IN ('private', 'shared', 'public'));
+  CHECK (visibility IN ('private', 'shared', 'public'));
 
 
 

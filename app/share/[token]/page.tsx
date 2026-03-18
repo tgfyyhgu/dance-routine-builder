@@ -3,42 +3,36 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
+import { useAuth } from '@/lib/AuthContext'
 import { RoutineStep, Routine } from '@/types/routine'
 import RoutinePlayer from '@/components/RoutinePlayer'
-import { supabase } from '@/lib/supabaseClient'
+import { getSharedRoutineByToken, copyRoutineToOwn } from '@/lib/sharing'
 
 export default function SharePage() {
   const { token } = useParams() as { token: string }
+  const { user } = useAuth()
   const [routine, setRoutine] = useState<Routine | null>(null)
+  const [originalRoutine, setOriginalRoutine] = useState<Routine | null>(null)
   const [currentStep, setCurrentStep] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [copying, setCopying] = useState(false)
+  const [copySuccess, setCopySuccess] = useState(false)
 
   useEffect(() => {
     async function loadSharedRoutine() {
       if (!token) return
 
       try {
-        const { data, error: fetchError } = await supabase
-          .from('routines')
-          .select('*')
-          .eq('shared_token', token)
-          .single()
-
-        if (fetchError) {
-          setError('Routine not found or no longer shared')
-          return
+        const result = await getSharedRoutineByToken(token)
+        setRoutine(result.routine as Routine)
+        if (result.original) {
+          setOriginalRoutine(result.original as Routine)
         }
-
-        if (!data) {
-          setError('Routine not found')
-          return
-        }
-
-        setRoutine(data as Routine)
       } catch (err) {
+        const message = err instanceof Error ? err.message : 'Error loading routine'
         console.error('Error loading shared routine:', err)
-        setError('Error loading routine')
+        setError(message)
       } finally {
         setLoading(false)
       }
@@ -46,6 +40,32 @@ export default function SharePage() {
 
     loadSharedRoutine()
   }, [token])
+
+  async function handleCopyRoutine() {
+    if (!user || !routine) {
+      setError('You must be logged in to copy routines')
+      return
+    }
+
+    setCopying(true)
+    try {
+      const newRoutineId = await copyRoutineToOwn(
+        routine.id,
+        user.id,
+        `${routine.name} (Copy)`
+      )
+      setCopySuccess(true)
+      setTimeout(() => {
+        window.location.href = `/${routine.dance_style}/choreo?routineId=${newRoutineId}`
+      }, 1500)
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to copy routine'
+      setError(message)
+      console.error('Error copying routine:', err)
+    } finally {
+      setCopying(false)
+    }
+  }
 
   if (loading) {
     return (
@@ -132,9 +152,44 @@ export default function SharePage() {
           </div>
         </div>
 
-        {/* Footer */}
+        {/* Attribution & Copy Section */}
+        {originalRoutine && (
+          <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg">
+            <p className="text-sm text-gray-700 dark:text-gray-300 mb-3">
+              Based on <span className="font-semibold">{originalRoutine.name}</span>
+            </p>
+          </div>
+        )}
+
+        {/* Copy Button */}
+        <div className="mt-8 text-center space-y-3">
+          {user ? (
+            <>
+              <button
+                onClick={handleCopyRoutine}
+                disabled={copying}
+                className="inline-block bg-green-600 dark:bg-green-700 text-white px-6 py-3 rounded-lg hover:bg-green-700 dark:hover:bg-green-600 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {copySuccess ? '✓ Copied! Redirecting...' : copying ? 'Copying...' : '📋 Copy to My Routines'}
+              </button>
+              <p className="text-xs text-gray-600 dark:text-gray-400">
+                You can edit and save your own version
+              </p>
+            </>
+          ) : (
+            <Link
+              href="/login"
+              className="inline-block bg-blue-600 dark:bg-blue-700 text-white px-6 py-3 rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors font-medium"
+            >
+              Sign In to Copy
+            </Link>
+          )}
+        </div>
+
+        {/* Disclaimer */}
         <div className="mt-8 text-center text-sm text-gray-600 dark:text-gray-400">
-          <p>This is a shared view. You can&apos;t edit this routine.</p>
+          <p>This is a shared view. You can&apos;t edit this routine directly.</p>
+          <p className="mt-1">Copy it to create your own editable version.</p>
         </div>
       </div>
     </main>
