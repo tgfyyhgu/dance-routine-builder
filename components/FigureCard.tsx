@@ -17,6 +17,9 @@ type Props = {
   readonly end_time: number | null
   readonly isOpen: boolean
   readonly toggleVideo: (id: string) => void
+  readonly visibility?: 'private' | 'public'
+  readonly created_by?: string
+  readonly currentUserId?: string
 }
 export default function FigureCard({
   figureId,
@@ -28,6 +31,9 @@ export default function FigureCard({
   end_time,
   isOpen,
   toggleVideo,
+  visibility,
+  created_by,
+  currentUserId,
 }: Props) {
   const videoVisible = isOpen
 
@@ -48,7 +54,16 @@ export default function FigureCard({
       className="border-b dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
       onClick={() => toggleVideo(figureId)}
     >
-      <td className="p-2 font-semibold text-sm">{name}</td>
+      <td className="p-2 font-semibold text-sm">
+        <div className="flex items-center gap-2">
+          <span>{name}</span>
+          {visibility === 'public' && created_by !== currentUserId && (
+            <span className="text-xs bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200 px-2 py-1 rounded whitespace-nowrap">
+              🌍 From another creator
+            </span>
+          )}
+        </div>
+      </td>
 
       <td className="p-2 text-xs">
         {difficulty === 0 ? (

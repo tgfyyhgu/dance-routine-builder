@@ -18,6 +18,7 @@ interface Figure {
   end_time: number
   dance_style: string
   visibility?: 'private' | 'public'
+  created_by?: string
 }
 
 // Helper function to clean YouTube URLs by removing playlist parameters
@@ -268,7 +269,9 @@ export default function FiguresPage() {
             <button
               className="bg-yellow-500 dark:bg-yellow-600 text-white px-4 py-2 rounded hover:bg-yellow-600 dark:hover:bg-yellow-700 transition-colors font-medium"
               onClick={() => {
-                setEditedFigures(figures)
+                // Only allow editing figures the user created
+                const userFigures = figures.filter(f => f.created_by === user?.id)
+                setEditedFigures(userFigures)
                 setEditMode(true)
               }}
             >
@@ -534,6 +537,9 @@ export default function FiguresPage() {
                 isOpen={openVideos.has(figure.id)}
                 toggleVideo={toggleVideo}
                 figureId={figure.id}
+                visibility={figure.visibility}
+                created_by={figure.created_by}
+                currentUserId={user?.id}
               />
             ))
           }
