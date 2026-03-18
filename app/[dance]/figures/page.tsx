@@ -17,6 +17,7 @@ interface Figure {
   start_time: number
   end_time: number
   dance_style: string
+  visibility?: 'private' | 'public'
 }
 
 // Helper function to clean YouTube URLs by removing playlist parameters
@@ -140,7 +141,8 @@ export default function FiguresPage() {
               note: fig.note,
               youtube_url: cleanUrl,
               start_time: fig.start_time,
-              end_time: fig.end_time
+              end_time: fig.end_time,
+              visibility: fig.visibility || 'private'
             })
             .eq("id", fig.id)
           
@@ -327,7 +329,8 @@ export default function FiguresPage() {
                 youtube_url: "",
                 start_time: 0,
                 end_time: 0,
-                dance_style: dance
+                dance_style: dance,
+                visibility: 'private'
               }
               ])
             }}
@@ -356,6 +359,7 @@ export default function FiguresPage() {
             <th className="text-left p-2 text-gray-900 dark:text-white">Difficulty 1-5</th>
             <th className="text-left p-2 text-gray-900 dark:text-white">Notes</th>
             <th className="text-left p-2 text-gray-900 dark:text-white">Videos</th>
+            {editMode && <th className="text-left p-2 text-gray-900 dark:text-white">Visibility</th>}
           </tr>
         </thead>
 
@@ -464,6 +468,21 @@ export default function FiguresPage() {
                       />
                     </td>
 
+                    <td className="p-2">
+                      <select
+                        className="border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white p-1 w-full text-sm"
+                        value={figure.visibility || 'private'}
+                        onChange={(e) => {
+                          const updated = [...editedFigures]
+                          updated[index].visibility = e.target.value as 'private' | 'public'
+                          setEditedFigures(updated)
+                        }}
+                      >
+                        <option value="private">🔒 Private</option>
+                        <option value="public">🌍 Public</option>
+                      </select>
+                    </td>
+
                     <td>
                       <button
                         className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 font-medium"
@@ -482,7 +501,7 @@ export default function FiguresPage() {
 
                     <tr className="border-b dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
 
-                      <td colSpan={7} className="p-4">
+                      <td colSpan={8} className="p-4">
 
                         <iframe
                           width="420"
