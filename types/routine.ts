@@ -118,6 +118,35 @@ export interface Routine {
   // steps[0] = first move, steps[1] = second move, etc.
   // Can be reordered by dragging in the UI
   steps: RoutineStep[]
+
+  // Owner's user ID (Supabase auth user)
+  user_id?: string
+
+  // Visibility: private (only owner), shared (link-only), public (discoverable)
+  visibility?: 'private' | 'shared' | 'public'
+
+  // If this routine was copied from a shared routine, this points to the original
+  // Used to show attribution/lineage
+  based_on_id?: string | null
+}
+
+/**
+ * Share Interface
+ * ===============
+ * Represents a share link for a routine or figure.
+ * Stored in "shares" table in Supabase.
+ */
+export interface Share {
+  id: string
+  token: string                    // URL token (e.g. "AbCd1234")
+  type: 'routine' | 'figure'       // What type of resource is shared
+  resource_id: string              // routines.id or figures.id
+  created_by: string               // user_id of creator
+  is_public: boolean               // true = listed in discover, false = link-only
+  created_at: string
+  expiry_date?: string | null      // Optional expiration timestamp
+  view_count: number               // How many times viewed
+  last_viewed_at?: string | null   // Last time someone viewed this share
 }
 
 /**
