@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabaseClient"
 import FigureCard from "@/components/FigureCard"
 import Link from "next/link"
 import { parseTimeToSeconds, formatSecondsToTime } from "@/lib/timeUtils"
+import { useAuth } from "@/lib/AuthContext"
 
 interface Figure {
   id: string
@@ -36,6 +37,7 @@ function cleanYouTubeUrl(url: string): string {
 export default function FiguresPage() {
   const params = useParams()
   const dance = params.dance as string
+  const { user } = useAuth()
   const [figures, setFigures] = useState<Figure[]>([])
   const [searchTerm, setSearchTerm] = useState("")
   const [difficultyFilter, setDifficultyFilter] = useState("")
@@ -161,7 +163,9 @@ export default function FiguresPage() {
               youtube_url: cleanUrl,
               start_time: fig.start_time,
               end_time: fig.end_time,
-              dance_style: dance
+              dance_style: dance,
+              created_by: user?.id,
+              visibility: 'private'
             })
           
           if (error) {
