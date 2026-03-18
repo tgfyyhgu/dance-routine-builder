@@ -29,6 +29,12 @@ function Navigation() {
             <span className="text-xs md:text-sm text-gray-600 dark:text-gray-400 break-all">
               {user.email}
             </span>
+            <Link 
+              href="/account"
+              className="text-gray-700 dark:text-gray-300 hover:text-blue-500 dark:hover:text-blue-400 transition-colors text-sm md:text-base font-medium"
+            >
+              Account
+            </Link>
             <button
               onClick={handleLogout}
               className="bg-red-500 dark:bg-red-700 text-white px-3 py-1 md:px-4 md:py-2 rounded text-xs md:text-sm hover:bg-red-600 dark:hover:bg-red-600 transition-colors font-medium w-full md:w-auto"
