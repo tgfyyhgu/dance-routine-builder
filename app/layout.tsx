@@ -26,9 +26,6 @@ function Navigation() {
       <div className="w-full md:w-auto flex flex-col md:flex-row gap-3 md:gap-6 items-start md:items-center">
         {user ? (
           <>
-            <Link href="/my-routines" className="hover:text-blue-500 dark:hover:text-blue-400 transition-colors text-sm md:text-base">
-              My Routines
-            </Link>
             <span className="text-xs md:text-sm text-gray-600 dark:text-gray-400 break-all">
               {user.email}
             </span>

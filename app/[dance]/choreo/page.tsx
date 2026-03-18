@@ -632,20 +632,12 @@ export default function ChoreoPage() {
         <div className="border-b dark:border-gray-800 bg-white dark:bg-gray-900 px-6 py-3">
           <div className="flex justify-between items-center">
             <h1 className="text-lg font-bold text-gray-900 dark:text-white">{dance.toUpperCase()} - Choreography Builder</h1>
-            <div className="flex gap-2">
-              <Link 
-                href="/my-routines"
-                className="bg-indigo-500 dark:bg-indigo-700 text-white px-2 py-1 rounded hover:bg-indigo-600 dark:hover:bg-indigo-600 transition-colors font-medium text-xs"
-              >
-                📖 My Routines
-              </Link>
-              <Link 
-                href={`/${dance}/figures`}
-                className="bg-blue-500 dark:bg-blue-700 text-white px-2 py-1 rounded hover:bg-blue-600 dark:hover:bg-blue-600 transition-colors font-medium text-xs"
-              >
-                📚 Manage Figures
-              </Link>
-            </div>
+            <Link 
+              href={`/${dance}/figures`}
+              className="bg-blue-500 dark:bg-blue-700 text-white px-2 py-1 rounded hover:bg-blue-600 dark:hover:bg-blue-600 transition-colors font-medium text-xs"
+            >
+              📚 Manage Figures
+            </Link>
           </div>
         </div>
 
