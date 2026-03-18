@@ -310,52 +310,36 @@ export default function RoutineBuilder({
           <div className="flex gap-2 items-center flex-wrap text-xs">
             <span className="font-semibold text-gray-700 dark:text-gray-300">Share:</span>
             
-            {/* Visibility selector */}
-            <div className="flex gap-1">
-              <button
-                onClick={() => onVisibilityChange?.('private')}
-                disabled={isSharing}
-                className={`px-2 py-1 rounded text-xs font-medium transition-colors ${
-                  visibility === 'private'
-                    ? 'bg-gray-700 dark:bg-gray-600 text-white'
-                    : 'bg-gray-300 dark:bg-gray-600 text-gray-900 dark:text-gray-100 hover:bg-gray-400 dark:hover:bg-gray-500'
-                } disabled:opacity-50`}
-              >
-                🔒 Private
-              </button>
-              <button
-                onClick={() => onVisibilityChange?.('shared')}
-                disabled={isSharing}
-                className={`px-2 py-1 rounded text-xs font-medium transition-colors ${
-                  visibility === 'shared'
-                    ? 'bg-blue-600 dark:bg-blue-700 text-white'
-                    : 'bg-gray-300 dark:bg-gray-600 text-gray-900 dark:text-gray-100 hover:bg-gray-400 dark:hover:bg-gray-500'
-                } disabled:opacity-50`}
-              >
-                🔗 Link
-              </button>
-              <button
-                onClick={() => onVisibilityChange?.('public')}
-                disabled={isSharing}
-                className={`px-2 py-1 rounded text-xs font-medium transition-colors ${
-                  visibility === 'public'
-                    ? 'bg-green-600 dark:bg-green-700 text-white'
-                    : 'bg-gray-300 dark:bg-gray-600 text-gray-900 dark:text-gray-100 hover:bg-gray-400 dark:hover:bg-gray-500'
-                } disabled:opacity-50`}
-              >
-                🌍 Public
-              </button>
-            </div>
+            {/* Visibility toggle */}
+            <button
+              onClick={() => onVisibilityChange?.(visibility === 'private' ? 'public' : 'private')}
+              disabled={isSharing}
+              className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
+                visibility === 'private'
+                  ? 'bg-gray-600 dark:bg-gray-700 text-white hover:bg-gray-700'
+                  : 'bg-green-600 dark:bg-green-700 text-white hover:bg-green-700'
+              } disabled:opacity-50`}
+            >
+              {visibility === 'private' ? '🔒 Private' : '🌍 Public'}
+            </button>
 
-            {/* Share button & URL display */}
-            {visibility === 'shared' && shareUrl && (
+            {/* Create/Revoke Share button */}
+            {!shareUrl ? (
+              <button
+                onClick={onCreateShare}
+                disabled={isSharing}
+                className="bg-blue-600 dark:bg-blue-700 text-white px-3 py-1 rounded hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors text-xs font-medium disabled:opacity-50"
+              >
+                🔗 Create Share Link
+              </button>
+            ) : (
               <>
-                <div className="flex-1 flex gap-2 items-center min-w-fit">
+                <div className="flex gap-2 items-center min-w-fit">
                   <input
                     type="text"
                     value={shareUrl}
                     readOnly
-                    className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-xs bg-white dark:bg-gray-700 text-gray-900 dark:text-white flex-1 min-w-48"
+                    className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-xs bg-white dark:bg-gray-700 text-gray-900 dark:text-white flex-shrink min-w-48"
                   />
                   <button
                     onClick={async () => {

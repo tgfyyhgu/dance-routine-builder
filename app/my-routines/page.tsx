@@ -5,7 +5,7 @@ import Link from "next/link"
 import { supabase } from "@/lib/supabaseClient"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/lib/AuthContext"
-import { generateShareToken, generateShareUrl, copyToClipboard } from "@/lib/sharing"
+import { createShareLink, copyToClipboard } from "@/lib/sharing"
 
 interface SavedRoutine {
   id: string
@@ -13,7 +13,6 @@ interface SavedRoutine {
   dance_style: string
   created_at: string
   steps: unknown[]
-  shared_token?: string
 }
 
 export default function MyRoutinesPage() {
@@ -165,48 +164,14 @@ export default function MyRoutinesPage() {
     setShareLoading(true)
     
     try {
-      // If already shared, just show the existing share URL
-      if (routine.shared_token) {
-        const url = generateShareUrl(routine.shared_token)
-        setShareModal({ id: routine.id, url })
-        setShareLoading(false)
-        return
-      }
-
-      // Generate new share token
-      const token = generateShareToken()
+      // Generate share link using the sharing utilities
+      const { token, url } = await createShareLink(routine.id, user!.id, false)
       
-      // Update routine with share token
-      const { error } = await supabase
-        .from("routines")
-        .update({ shared_token: token })
-        .eq("id", routine.id)
-
-      if (error) {
-        console.error("Error sharing routine:", error)
-        alert("Failed to share routine: " + error.message)
-        setShareLoading(false)
-        return
-      }
-
-      // Update local state
-      const updated = routines.map(r => 
-        r.id === routine.id ? { ...r, shared_token: token } : r
-      )
-      setRoutines(updated)
-      
-      // Update grouped state
-      const newGrouped = { ...groupedByDance }
-      for (const style in newGrouped) {
-        newGrouped[style] = newGrouped[style].map(r =>
-          r.id === routine.id ? { ...r, shared_token: token } : r
-        )
-      }
-      setGroupedByDance(newGrouped)
-
-      // Show share modal
-      const url = generateShareUrl(token)
+      // Show share modal with the new URL
       setShareModal({ id: routine.id, url })
+    } catch (error) {
+      console.error("Error creating share link:", error)
+      alert("Failed to share routine: " + (error instanceof Error ? error.message : "Unknown error"))
     } finally {
       setShareLoading(false)
     }
