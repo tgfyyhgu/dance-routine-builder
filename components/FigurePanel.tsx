@@ -4,7 +4,7 @@
  */
 "use client"
 
-import { useDraggable } from "@dnd-kit/core"
+import { useDraggable, useDroppable } from "@dnd-kit/core"
 import { CSS } from "@dnd-kit/utilities"
 import { Figure, YTPlayer } from "@/types/routine"
 import { memo, useRef, useEffect, useId } from "react"
@@ -147,6 +147,7 @@ interface Props {
   readonly expanded: string | null
   readonly onToggleExpand: (id: string) => void
   readonly onAddFigure?: (figure: Figure) => void
+  readonly onSaveFigure?: (figure: Figure) => void
   readonly onStartResize: (e: React.MouseEvent) => void
   readonly onCollapse: () => void
 }
@@ -158,9 +159,14 @@ export default function FigurePanel({
   expanded,
   onToggleExpand,
   onAddFigure,
+  onSaveFigure,
   onStartResize,
   onCollapse,
 }: Props) {
+  const { setNodeRef: setFigureSaveRef, isOver: isOverSaveZone } = useDroppable({
+    id: "figures-save-zone",
+  })
+
   return (
     <>
       {!collapsed && (
@@ -173,6 +179,20 @@ export default function FigurePanel({
             <button onClick={onCollapse} className="text-gray-600 dark:text-gray-400 text-sm">
               ◀
             </button>
+          </div>
+
+          {/* Drop zone for saving figures from routine */}
+          <div
+            ref={setFigureSaveRef}
+            className={`p-3 text-center border-2 border-dashed rounded m-2 transition ${
+              isOverSaveZone
+                ? 'border-green-500 bg-green-50 dark:bg-green-950'
+                : 'border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800'
+            }`}
+          >
+            <p className="text-xs text-gray-600 dark:text-gray-400">
+              📌 Drop figures here to save
+            </p>
           </div>
 
           {figures.map((fig) => (

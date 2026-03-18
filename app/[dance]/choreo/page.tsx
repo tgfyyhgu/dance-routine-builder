@@ -250,15 +250,21 @@ export default function ChoreoPage() {
     pushHistory(newRoutine)
   }
 
-  // Handle drag-drop (reorder steps or add figures)
+  // Handle drag-drop (reorder steps, add figures, or save figure)
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event
     const draggedId = active.id as string
     const draggedIndex = routine.findIndex(s => s.stepId === draggedId)
 
-    // Scenario 1: Reordering existing steps
+    // Scenario 1: Save figure from routine to library (drag step → figures-save-zone)
+    if (draggedIndex !== -1 && over?.id === "figures-save-zone") {
+      saveFigureFromRoutine(routine[draggedIndex].figure)
+      return
+    }
+
+    // Scenario 2: Reordering existing steps
     if (draggedIndex !== -1) {
-      if (over?.id && over.id !== "routine-droppable") {
+      if (over?.id && over.id !== "routine-droppable" && over.id !== "figures-save-zone") {
         const targetIndex = routine.findIndex(s => s.stepId === over.id)
         if (targetIndex !== -1 && draggedIndex !== targetIndex) {
           const newRoutine = [...routine]
@@ -271,11 +277,11 @@ export default function ChoreoPage() {
       return
     }
 
-    // Scenario 2: Adding new figure from panel
+    // Scenario 3: Adding new figure from panel
     const figure = figures.find(f => f.id === draggedId)
     if (figure) {
       // If dropped over a step, insert before that step
-      if (over?.id && over.id !== "routine-droppable") {
+      if (over?.id && over.id !== "routine-droppable" && over.id !== "figures-save-zone") {
         const targetIndex = routine.findIndex(s => s.stepId === over.id)
         if (targetIndex !== -1) {
           addFigureAtIndex(figure, targetIndex)
@@ -506,6 +512,37 @@ export default function ChoreoPage() {
     }
   }
 
+  async function saveFigureFromRoutine(figureData: Figure) {
+    try {
+      const newFigure = {
+        ...figureData,
+        id: uuid(), // New ID for the saved figure
+        created_by: user?.id,
+        visibility: 'private' as const,
+      }
+
+      const { error } = await supabase
+        .from('figures')
+        .insert([newFigure])
+
+      if (error) {
+        console.error('Error saving figure:', error)
+        setSaveStatus('❌ Failed to save figure')
+        setTimeout(() => setSaveStatus(null), 3000)
+        return
+      }
+
+      // Update local figures list
+      setFigures([...figures, newFigure])
+      setSaveStatus('✓ Figure saved to your library')
+      setTimeout(() => setSaveStatus(null), 2000)
+    } catch (error) {
+      console.error('Error saving figure:', error)
+      setSaveStatus('❌ Failed to save figure')
+      setTimeout(() => setSaveStatus(null), 3000)
+    }
+  }
+
   async function handleVisibilityChange(newVisibility: 'private' | 'public') {
     if (!routineId) {
       alert("Save the routine first before sharing")
@@ -622,6 +659,7 @@ export default function ChoreoPage() {
             expanded={expanded}
             onToggleExpand={toggleExpand}
             onAddFigure={addFigure}
+            onSaveFigure={saveFigureFromRoutine}
             onStartResize={startResize}
             onCollapse={() => setCollapsed(!collapsed)}
           />

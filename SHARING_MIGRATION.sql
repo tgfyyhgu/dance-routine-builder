@@ -69,9 +69,12 @@ ALTER TABLE routines
 -- 3. UPDATE FIGURES TABLE (optional, for future figure sharing)
 -- ============================================================
 
--- Add visibility column
-ALTER TABLE figures ADD COLUMN visibility varchar(20) DEFAULT 'private'
-  CHECK (visibility IN ('private', 'public'));
+-- Add created_by column to track figure creator
+ALTER TABLE figures ADD COLUMN created_by uuid REFERENCES auth.users(id) ON DELETE CASCADE;
+
+-- Visibility column already exists (added in previous migration)
+-- ALTER TABLE figures ADD COLUMN visibility varchar(20) DEFAULT 'private'
+--   CHECK (visibility IN ('private', 'public'));
 
 
 
@@ -126,15 +129,23 @@ CREATE POLICY routines_delete_own
   USING (user_id = auth.uid());
 
 
--- FIGURES TABLE: Anyone can read if shared/public or owner
-CREATE POLICY figures_read_own_or_shared
+-- FIGURES TABLE: Anyone can read if owner or public
+CREATE POLICY figures_read_own_or_public
   ON figures FOR SELECT
   USING (
-    -- Figures don't have user_id, so assume dance_style-scoped or always readable
-    visibility = 'shared' OR 
-    visibility = 'public' OR
-    true  -- Allow reading all (adjust as needed)
+    created_by = auth.uid() OR 
+    visibility = 'public'
   );
+
+-- FIGURES TABLE: Only creator can update
+CREATE POLICY figures_update_own
+  ON figures FOR UPDATE
+  USING (created_by = auth.uid());
+
+-- FIGURES TABLE: Only creator can delete
+CREATE POLICY figures_delete_own
+  ON figures FOR DELETE
+  USING (created_by = auth.uid());
 
 
 -- ============================================================

@@ -48,6 +48,12 @@ export interface Figure {
   // Example: 45 = stop at 45 seconds
   // Together with start_time, these set the "clip" of the video to show
   end_time: number
+
+  // Creator's user ID (Supabase auth user)
+  created_by?: string
+
+  // Visibility: private (only creator) or public (anyone can view)
+  visibility?: 'private' | 'public'
 }
 
 /**
