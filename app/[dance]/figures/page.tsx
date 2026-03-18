@@ -92,25 +92,64 @@ export default function FiguresPage() {
 
   // Validate edited figures and sync with Supabase (delete, update, insert)
   async function saveChanges() {
+    // Separate figures into: empty (delete), incomplete (need name), complete (save)
+    const emptyFigures: string[] = []
+    const incompleteFigures: Figure[] = []
+    const completeFigures: Figure[] = []
 
     for (const fig of editedFigures) {
+      const isCompletelyEmpty = 
+        !fig.name?.trim() &&
+        !fig.youtube_url?.trim() &&
+        !fig.note?.trim() &&
+        fig.start_time === 0 &&
+        fig.end_time === 0 &&
+        fig.difficulty === 0
 
-      if (!fig.name) {
-        alert("Name cannot be empty")
-        return
+      const hasOtherData = 
+        fig.youtube_url?.trim() ||
+        fig.note?.trim() ||
+        fig.start_time !== 0 ||
+        fig.end_time !== 0 ||
+        fig.difficulty !== 0
+
+      if (isCompletelyEmpty) {
+        emptyFigures.push(fig.id)
+      } else if (hasOtherData && !fig.name?.trim()) {
+        incompleteFigures.push(fig)
+      } else if (fig.name?.trim()) {
+        completeFigures.push(fig)
       }
+    }
 
+    // Prompt for names if figures have data but no name
+    if (incompleteFigures.length > 0) {
+      for (const fig of incompleteFigures) {
+        const name = prompt("This figure has data but no name. Please enter a name:", "")
+        if (name === null) {
+          // User cancelled - abort entire save
+          return
+        }
+        if (!name.trim()) {
+          alert("Name cannot be empty")
+          return
+        }
+        fig.name = name.trim()
+        completeFigures.push(fig)
+      }
+    }
+
+    // Validate times for complete figures
+    for (const fig of completeFigures) {
       if (fig.end_time && fig.start_time && fig.end_time <= fig.start_time) {
         alert(`End time must be greater than start time for ${fig.name}`)
         return
       }
-
     }
 
     const originalIds = figures.map(f => f.id)
-    const editedIds = new Set(editedFigures.map(f => f.id))
-
-    const deletedIds = originalIds.filter(id => !editedIds.has(id))
+    const allDeleteIds = new Set([...emptyFigures, ...originalIds.filter(id => !completeFigures.map(f => f.id).includes(id))])
+    const deletedIds = Array.from(allDeleteIds)
 
     try {
       // DELETE
@@ -127,7 +166,7 @@ export default function FiguresPage() {
       }
 
       // UPDATE and INSERT
-      for (const fig of editedFigures) {
+      for (const fig of completeFigures) {
         // Clean YouTube URL before saving (removes playlist parameters that prevent embedding)
         const cleanUrl = cleanYouTubeUrl(fig.youtube_url)
 
