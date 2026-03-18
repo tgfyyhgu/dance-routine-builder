@@ -514,6 +514,13 @@ export default function ChoreoPage() {
     }
     try {
       setIsSharing(true)
+      
+      // If private, auto-upgrade to 'shared' when creating a share link
+      if (visibility === 'private') {
+        await updateRoutineVisibility(routineId, 'shared')
+        setVisibility('shared')
+      }
+      
       const { token, url } = await createShareLink(routineId, user?.id || "", visibility === 'public')
       setShareToken(token)
       setShareUrl(url)

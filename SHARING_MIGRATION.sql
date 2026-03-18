@@ -85,6 +85,11 @@ CREATE POLICY shares_read_by_anyone
   ON shares FOR SELECT
   USING (true);  -- Anyone can query, but must provide token
 
+-- SHARES TABLE: Only creator can insert (create share)
+CREATE POLICY shares_insert_own
+  ON shares FOR INSERT
+  WITH CHECK (created_by = auth.uid());
+
 -- SHARES TABLE: Only creator can delete (revoke)
 CREATE POLICY shares_delete_own
   ON shares FOR DELETE
