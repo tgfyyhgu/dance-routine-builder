@@ -35,7 +35,7 @@ interface Props {
   readonly onVisibilityChange?: (visibility: 'private' | 'shared' | 'public') => Promise<void>
   readonly onCreateShare?: () => Promise<void>
   readonly onRevokeShare?: () => Promise<void>
-  readonly shareUrl?: string
+  readonly shareUrl?: string | null
   readonly isSharing?: boolean
 }
 

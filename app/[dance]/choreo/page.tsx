@@ -24,6 +24,7 @@ import { Figure, RoutineStep } from "@/types/routine"
 import { v4 as uuid } from "uuid"
 import { exportRoutine } from "@/lib/routineExport"
 import { importRoutine } from "@/lib/routineImport"
+import { createShareLink, revokeShare, updateRoutineVisibility } from "@/lib/sharing"
 
 /**
  * 3-panel choreography editor: left (figures), center (builder), right (player).
@@ -50,6 +51,12 @@ export default function ChoreoPage() {
   // Routine metadata
   const [routineName, setRoutineName] = useState("Untitled Routine")
   const [routineId, setRoutineId] = useState<string | null>(null)  // null = new routine, string = saved to Supabase
+  
+  // Sharing state
+  const [visibility, setVisibility] = useState<'private' | 'shared' | 'public'>('private')
+  const [shareToken, setShareToken] = useState<string | null>(null)
+  const [shareUrl, setShareUrl] = useState<string | null>(null)
+  const [isSharing, setIsSharing] = useState(false)
 
   // Saving status
   const [isSaving, setIsSaving] = useState(false)
@@ -117,6 +124,8 @@ export default function ChoreoPage() {
           setRoutineId(data.id)
           setRoutineName(data.name)
           setRoutine(data.steps || [])
+          setVisibility(data.visibility || 'private')
+          setShareToken(data.shareToken || null)
           lastSavedStateRef.current = data.steps || []
           setHistory([])
           setFuture([])
@@ -478,6 +487,68 @@ export default function ChoreoPage() {
     }
   }
 
+  async function handleVisibilityChange(newVisibility: 'private' | 'shared' | 'public') {
+    if (!routineId) {
+      alert("Save the routine first before sharing")
+      return
+    }
+    try {
+      setIsSharing(true)
+      await updateRoutineVisibility(routineId, newVisibility)
+      setVisibility(newVisibility)
+      setSaveStatus(`✓ Visibility changed to ${newVisibility}`)
+      setTimeout(() => setSaveStatus(null), 2000)
+    } catch (error) {
+      console.error("Error changing visibility:", error)
+      setSaveStatus("❌ Failed to change visibility")
+      setTimeout(() => setSaveStatus(null), 3000)
+    } finally {
+      setIsSharing(false)
+    }
+  }
+
+  async function handleCreateShare() {
+    if (!routineId) {
+      alert("Save the routine first before sharing")
+      return
+    }
+    try {
+      setIsSharing(true)
+      const { token, url } = await createShareLink(routineId, user?.id || "", visibility === 'public')
+      setShareToken(token)
+      setShareUrl(url)
+      setSaveStatus("✓ Share link created")
+      setTimeout(() => setSaveStatus(null), 2000)
+    } catch (error) {
+      console.error("Error creating share link:", error)
+      setSaveStatus("❌ Failed to create share link")
+      setTimeout(() => setSaveStatus(null), 3000)
+    } finally {
+      setIsSharing(false)
+    }
+  }
+
+  async function handleRevokeShare() {
+    if (!shareToken) {
+      alert("No share link to revoke")
+      return
+    }
+    try {
+      setIsSharing(true)
+      await revokeShare(shareToken)
+      setShareToken(null)
+      setShareUrl(null)
+      setSaveStatus("✓ Share link revoked")
+      setTimeout(() => setSaveStatus(null), 2000)
+    } catch (error) {
+      console.error("Error revoking share:", error)
+      setSaveStatus("❌ Failed to revoke share")
+      setTimeout(() => setSaveStatus(null), 3000)
+    } finally {
+      setIsSharing(false)
+    }
+  }
+
   // Configure dnd-kit sensors to require 5px drag before activation
   // This lets clicks on buttons pass through without triggering drag
   const sensors = useSensors(
@@ -558,6 +629,13 @@ export default function ChoreoPage() {
                   routineId={routineId}
                   handleNewRoutine={handleNewRoutine}
                   fileInputRef={fileInputRef}
+                  visibility={visibility}
+                  shareToken={shareToken}
+                  onVisibilityChange={handleVisibilityChange}
+                  onCreateShare={handleCreateShare}
+                  onRevokeShare={handleRevokeShare}
+                  shareUrl={shareUrl}
+                  isSharing={isSharing}
                 />
               </div>
 
