@@ -83,7 +83,7 @@ export default function RoutinePlayer({
 
     // Set a timeout to detect if player initialization fails (e.g., ad blocker blocking YouTube)
     initTimeoutRef.current = setTimeout(() => {
-      if (!playerInstanceRef.current || playerInstanceRef.current.getPlayerState?.() === undefined) {
+      if (!playerInstanceRef.current) {
         console.warn(`[RoutinePlayer] Player initialization timeout for ${videoId}`)
         setPlayerError('YouTube player failed to load. Please disable ad blockers or refresh the page.')
         retryCountRef.current++

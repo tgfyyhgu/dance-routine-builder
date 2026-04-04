@@ -47,6 +47,7 @@ export interface YTPlayer {
   seekTo: (seconds: number) => void
   setPlaybackRate: (rate: number) => void
   getAvailablePlaybackRates?: () => number[]
+  getPlayerState: () => number
   destroy: () => void
   getCurrentTime: () => number
 }
