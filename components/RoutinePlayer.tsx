@@ -167,7 +167,7 @@ export default function RoutinePlayer({
             }
           }
         },
-      },
+      }
     })
 
     return () => {
