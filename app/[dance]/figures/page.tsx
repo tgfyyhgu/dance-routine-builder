@@ -78,6 +78,7 @@ export default function FiguresPage() {
   const [editedFigures, setEditedFigures] = useState<Figure[]>([])
   const [openVideosInEditMode, setOpenVideosInEditMode] = useState<Set<string>>(new Set())
   const [editingFigureId, setEditingFigureId] = useState<string | null>(null)
+  const [rawTimeInputs, setRawTimeInputs] = useState<{ [figureId: string]: { start: string; end: string } }>({})
   const tableBodyRef = useRef<HTMLTableSectionElement>(null)
 
 
@@ -141,8 +142,25 @@ export default function FiguresPage() {
       }
     }
 
-    // Validate times for complete figures
+    // Parse time inputs
     for (const fig of completeFigures) {
+      const rawInput = rawTimeInputs[fig.id] || { start: '', end: '' }
+      
+      // Parse start time
+      if (rawInput.start.trim()) {
+        const parsed = parseTimeInputToSeconds(rawInput.start)
+        if (parsed === null) return // Error already shown, abort save
+        fig.start_time = parsed
+      }
+      
+      // Parse end time
+      if (rawInput.end.trim()) {
+        const parsed = parseTimeInputToSeconds(rawInput.end)
+        if (parsed === null) return // Error already shown, abort save
+        fig.end_time = parsed
+      }
+      
+      // Validate that end time is greater than start time
       if (fig.end_time && fig.start_time && fig.end_time <= fig.start_time) {
         alert(`End time must be greater than start time for ${fig.name}`)
         return
@@ -239,6 +257,7 @@ export default function FiguresPage() {
       // Collapse all videos when exiting edit mode
       setOpenVideosInEditMode(new Set())
       setEditingFigureId(null)
+      setRawTimeInputs({})
       setEditMode(false)
       alert("Changes saved successfully!")
 
@@ -259,6 +278,42 @@ export default function FiguresPage() {
     const updated = new Set(openVideosInEditMode)
     if (updated.has(id)) { updated.delete(id) } else { updated.add(id) }
     setOpenVideosInEditMode(updated)
+  }
+
+  // Parse time string to seconds using strict rules
+  function parseTimeInputToSeconds(input: string): number | null {
+    // Strip all non-numeric characters
+    const stripped = input.replace(/[^0-9]/g, '')
+    
+    // Check if empty after stripping
+    if (!stripped) return 0
+    
+    // Check if larger than 6 digits
+    if (stripped.length > 6) {
+      alert(`Time input is too long (${stripped.length} digits). Maximum 6 digits allowed (HHMMSS format).`)
+      return null
+    }
+    
+    // Left-fill with zeros to 6 digits
+    const padded = stripped.padStart(6, '0')
+    
+    // Slice into pairs: HH, MM, SS
+    const hh = parseInt(padded.slice(0, 2), 10)
+    const mm = parseInt(padded.slice(2, 4), 10)
+    const ss = parseInt(padded.slice(4, 6), 10)
+    
+    // Validate MM and SS are in range [0, 60)
+    if (mm >= 60) {
+      alert(`Minutes value (${mm}) is invalid. Must be between 0 and 59.`)
+      return null
+    }
+    if (ss >= 60) {
+      alert(`Seconds value (${ss}) is invalid. Must be between 0 and 59.`)
+      return null
+    }
+    
+    // Calculate total seconds
+    return hh * 3600 + mm * 60 + ss
   }
 
   return (
@@ -335,6 +390,7 @@ export default function FiguresPage() {
                 // Collapse all videos when entering edit mode
                 setOpenVideosInEditMode(new Set())
                 setEditingFigureId(null)
+                setRawTimeInputs({})
                 setEditMode(true)
               }}
             >
@@ -413,6 +469,7 @@ export default function FiguresPage() {
                 // Collapse all videos when canceling
                 setOpenVideosInEditMode(new Set())
                 setEditingFigureId(null)
+                setRawTimeInputs({})
               }}
             >
               Cancel
@@ -558,8 +615,8 @@ export default function FiguresPage() {
                       <input
                         type="text"
                         className="border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white p-1 w-24"
-                        placeholder="hh:mm:ss"
-                        value={formatSecondsToTime(figure.start_time)}
+                        placeholder="hhmmss"
+                        value={rawTimeInputs[figure.id]?.start ?? formatSecondsToTime(figure.start_time)}
                         onFocus={(e) => {
                           setEditingFigureId(figure.id)
                           if (figure.youtube_url) {
@@ -567,22 +624,25 @@ export default function FiguresPage() {
                           } else {
                             setOpenVideosInEditMode(new Set())
                           }
-                          if (figure.start_time === 0) {
+                          if (!rawTimeInputs[figure.id]?.start && figure.start_time === 0) {
                             e.target.value = ""
                           }
                         }}
                         onBlur={(e) => {
                           if (e.target.value === "") {
-                            e.target.value = formatSecondsToTime(0)
+                            e.target.value = formatSecondsToTime(figure.start_time)
                           }
                         }}
                         onChange={(e) => {
-                          const parsed = parseTimeToSeconds(e.target.value)
-                          const updated = [...editedFigures]
-                          updated[index].start_time = parsed
-                          setEditedFigures(updated)
+                          setRawTimeInputs({
+                            ...rawTimeInputs,
+                            [figure.id]: {
+                              start: e.target.value,
+                              end: rawTimeInputs[figure.id]?.end ?? ""
+                            }
+                          })
                         }}
-                        style={figure.start_time === 0 ? { color: '#9ca3af' } : {}}
+                        style={(rawTimeInputs[figure.id]?.start === "" || !rawTimeInputs[figure.id]?.start) && figure.start_time === 0 ? { color: '#9ca3af' } : {}}
                       />
                     </td>
 
@@ -590,8 +650,8 @@ export default function FiguresPage() {
                       <input
                         type="text"
                         className="border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white p-1 w-24"
-                        placeholder="hh:mm:ss"
-                        value={formatSecondsToTime(figure.end_time)}
+                        placeholder="hhmmss"
+                        value={rawTimeInputs[figure.id]?.end ?? formatSecondsToTime(figure.end_time)}
                         onFocus={(e) => {
                           setEditingFigureId(figure.id)
                           if (figure.youtube_url) {
@@ -599,22 +659,25 @@ export default function FiguresPage() {
                           } else {
                             setOpenVideosInEditMode(new Set())
                           }
-                          if (figure.end_time === 0) {
+                          if (!rawTimeInputs[figure.id]?.end && figure.end_time === 0) {
                             e.target.value = ""
                           }
                         }}
                         onBlur={(e) => {
                           if (e.target.value === "") {
-                            e.target.value = formatSecondsToTime(0)
+                            e.target.value = formatSecondsToTime(figure.end_time)
                           }
                         }}
                         onChange={(e) => {
-                          const parsed = parseTimeToSeconds(e.target.value)
-                          const updated = [...editedFigures]
-                          updated[index].end_time = parsed
-                          setEditedFigures(updated)
+                          setRawTimeInputs({
+                            ...rawTimeInputs,
+                            [figure.id]: {
+                              start: rawTimeInputs[figure.id]?.start ?? "",
+                              end: e.target.value
+                            }
+                          })
                         }}
-                        style={figure.end_time === 0 ? { color: '#9ca3af' } : {}}
+                        style={(rawTimeInputs[figure.id]?.end === "" || !rawTimeInputs[figure.id]?.end) && figure.end_time === 0 ? { color: '#9ca3af' } : {}}
                       />
                     </td>
 
