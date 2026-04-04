@@ -167,8 +167,11 @@ export default function RoutinePlayer({
             }
           }
         },
-      }
+      },
     })
+    } catch (e) {
+      console.error(`[RoutinePlayer] Player initialization error:`, e)
+    }
 
     return () => {
       // Clear initialization timeout on cleanup
