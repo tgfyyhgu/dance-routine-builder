@@ -34,10 +34,14 @@ export default function RoutinePlayer({
   onRepeatModeChange
 }: Props) {
   const [playing, setPlaying] = useState(false)
+  const [playerError, setPlayerError] = useState<string | null>(null)
   const playerRef = useRef<HTMLDivElement>(null)
   const playerInstanceRef = useRef<YTPlayer | null>(null)
   const autoAdvancingRef = useRef(false)
   const playerId = useId()
+  const initTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const retryCountRef = useRef(0)
+  const maxRetries = 2
 
   const step = steps.length > 0 ? steps[currentStep] : null
 
@@ -70,40 +74,65 @@ export default function RoutinePlayer({
       playerInstanceRef.current.destroy()
     }
 
+    // Clear any previous timeout
+    if (initTimeoutRef.current) clearTimeout(initTimeoutRef.current)
+    setPlayerError(null)
+
     const startTime = step?.figure.start_time || 0
     const endTime = step?.figure.end_time || 0
 
-    playerInstanceRef.current = new globalThis.window.YT.Player(playerId, {
-      videoId: videoId,
-      width: "100%",
-      height: "100%",
-      playerVars: {
-        controls: 0,
-        autoplay: 0,
-        // Don't set start/end here - we handle them manually
-        // start conflicts with seekTo(), end doesn't work reliably
-      },
-      events: {
-        onReady: () => {
-          console.log(`[RoutinePlayer] onReady for ${step?.figure.name} (${videoId}), seeking to ${startTime}s, end at ${endTime}s`)
-          try {
-            playerInstanceRef.current?.seekTo(startTime)
-            console.log(`[RoutinePlayer] seekTo completed successfully`)
-          } catch (e) {
-            console.error(`[RoutinePlayer] seekTo failed:`, e)
-          }
+    // Set a timeout to detect if player initialization fails (e.g., ad blocker blocking YouTube)
+    initTimeoutRef.current = setTimeout(() => {
+      if (!playerInstanceRef.current || playerInstanceRef.current.getPlayerState?.() === undefined) {
+        console.warn(`[RoutinePlayer] Player initialization timeout for ${videoId}`)
+        setPlayerError('YouTube player failed to load. Please disable ad blockers or refresh the page.')
+        retryCountRef.current++
+      }
+    }, 5000)
+
+    try {
+      playerInstanceRef.current = new globalThis.window.YT.Player(playerId, {
+        videoId: videoId,
+        width: "100%",
+        height: "100%",
+        playerVars: {
+          controls: 0,
+          autoplay: 0,
+          // Don't set start/end here - we handle them manually
+          // start conflicts with seekTo(), end doesn't work reliably
         },
-        onError: (event: { data: number }) => {
-          // 2 = invalid video ID, 5 = HTML5 player error, 100 = video not found, 101 = video not allowed to be played embedded, 150 = same as 101
-          const errorCodes: { [key: number]: string } = {
-            2: 'Invalid video ID',
-            5: 'HTML5 player error',
-            100: 'Video not found',
-            101: 'Video not allowed to be played embedded',
-            150: 'Video not allowed to be played embedded (same as 101)'
-          }
-          console.error(`[RoutinePlayer] YouTube Error for ${step?.figure.name} (${videoId}): ${errorCodes[event.data] || `Unknown error ${event.data}`}`)
-        },
+        events: {
+          onReady: () => {
+            // Player initialized successfully, clear timeout and error
+            if (initTimeoutRef.current) clearTimeout(initTimeoutRef.current)
+            setPlayerError(null)
+            retryCountRef.current = 0
+
+            console.log(`[RoutinePlayer] onReady for ${step?.figure.name} (${videoId}), seeking to ${startTime}s, end at ${endTime}s`)
+            try {
+              playerInstanceRef.current?.seekTo(startTime)
+              console.log(`[RoutinePlayer] seekTo completed successfully`)
+            } catch (e) {
+              console.error(`[RoutinePlayer] seekTo failed:`, e)
+            }
+          },
+          onError: (event: { data: number }) => {
+            // 2 = invalid video ID, 5 = HTML5 player error, 100 = video not found, 101 = video not allowed to be played embedded, 150 = same as 101
+            const errorCodes: { [key: number]: string } = {
+              2: 'Invalid video ID',
+              5: 'HTML5 player error',
+              100: 'Video not found',
+              101: 'Video not allowed to be played embedded',
+              150: 'Video not allowed to be played embedded (same as 101)'
+            }
+            const errorMsg = errorCodes[event.data] || `Unknown error ${event.data}`
+            console.error(`[RoutinePlayer] YouTube Error for ${step?.figure.name} (${videoId}): ${errorMsg}`)
+
+            // Show user-friendly error message for initialization failures
+            if (event.data === 5) {
+              setPlayerError('YouTube player encountered an error. Please disable ad blockers or refresh the page.')
+            }
+          },
         onStateChange: (event: { data: number }) => {
           // -1 = unstarted, 0 = ended, 1 = playing, 2 = paused, 3 = buffering, 5 = cued/ready
           const stateNames: { [key: number]: string } = { '-1': 'unstarted', '0': 'ended', '1': 'playing', '2': 'paused', '3': 'buffering', '5': 'cued' }
@@ -142,7 +171,8 @@ export default function RoutinePlayer({
     })
 
     return () => {
-      // Cleanup will happen when this effect runs again with new videoId
+      // Clear initialization timeout on cleanup
+      if (initTimeoutRef.current) clearTimeout(initTimeoutRef.current)
     }
   }, [videoId, step?.figure.start_time, step?.figure.end_time, currentStep, steps.length, onStepChange, playerId, repeatMode])
 
@@ -289,6 +319,17 @@ export default function RoutinePlayer({
 
   return (
     <div className="border dark:border-gray-800 p-4 flex flex-col h-full bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+      {/* Error banner - appears only if YouTube player fails to initialize */}
+      {playerError && (
+        <div className="mb-4 p-3 bg-amber-100 dark:bg-amber-900 border border-amber-300 dark:border-amber-700 rounded text-sm text-amber-800 dark:text-amber-200">
+          <div className="font-semibold mb-1">⚠ Video Player Issue</div>
+          <div>{playerError}</div>
+          <div className="text-xs mt-2 opacity-80">
+            Hint: Try disabling ad blockers on this site, or refresh the page to retry.
+          </div>
+        </div>
+      )}
+
       <div className="mb-4">
         <div className="flex justify-between items-center mb-2">
           <div>

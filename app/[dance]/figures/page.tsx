@@ -76,18 +76,8 @@ export default function FiguresPage() {
 
   const [editMode, setEditMode] = useState(false)
   const [editedFigures, setEditedFigures] = useState<Figure[]>([])
+  const [openVideosInEditMode, setOpenVideosInEditMode] = useState<Set<string>>(new Set())
   const tableBodyRef = useRef<HTMLTableSectionElement>(null)
-  const previousLengthRef = useRef(0)
-
-  // Auto-scroll to bottom when new figure is added
-  useEffect(() => {
-    if (editMode && editedFigures.length > previousLengthRef.current) {
-      setTimeout(() => {
-        tableBodyRef.current?.lastElementChild?.scrollIntoView({ behavior: "smooth", block: "end" })
-      }, 0)
-    }
-    previousLengthRef.current = editedFigures.length
-  }, [editedFigures.length, editMode])
 
 
   // Validate edited figures and sync with Supabase (delete, update, insert)
@@ -245,6 +235,8 @@ export default function FiguresPage() {
         setFigures(cleanedData)
       }
       
+      // Restore expansion state before exiting edit mode
+      setOpenVideos(new Set(openVideosInEditMode))
       setEditMode(false)
       alert("Changes saved successfully!")
 
@@ -259,6 +251,12 @@ export default function FiguresPage() {
     const updated = new Set(openVideos)
     if (updated.has(id)) { updated.delete(id) } else { updated.add(id) }
     setOpenVideos(updated)
+  }
+
+  function toggleVideoInEditMode(id: string) {
+    const updated = new Set(openVideosInEditMode)
+    if (updated.has(id)) { updated.delete(id) } else { updated.add(id) }
+    setOpenVideosInEditMode(updated)
   }
 
   return (
@@ -323,7 +321,17 @@ export default function FiguresPage() {
               onClick={() => {
                 // Only allow editing figures the user created
                 const userFigures = figures.filter(f => f.created_by === user?.id)
-                setEditedFigures(userFigures)
+                // Sort by created_at DESC (newest first), fallback to id if no created_at
+              const sorted = [...userFigures].sort((a, b) => {
+                const aFig = a as Figure & { created_at?: string }
+                const bFig = b as Figure & { created_at?: string }
+                const aTime = aFig.created_at ? new Date(aFig.created_at).getTime() : 0
+                const bTime = bFig.created_at ? new Date(bFig.created_at).getTime() : 0
+                return bTime - aTime
+              })
+              setEditedFigures(sorted)
+                // Preserve expansion state: transfer openVideos to openVideosInEditMode
+                setOpenVideosInEditMode(new Set(openVideos))
                 setEditMode(true)
               }}
             >
@@ -347,7 +355,7 @@ export default function FiguresPage() {
                 }
                 alert(`Cleaned ${cleaned} figures with playlist parameters`)
                 // Reload
-                window.location.reload()
+                globalThis.location.reload()
               }}
               title="Clean YouTube URLs in database (removes playlist params that prevent embedding)"
             >
@@ -372,49 +380,72 @@ export default function FiguresPage() {
       )}
 
       {editMode && (
-        <div className="flex gap-4 mb-4">
-          <button
-            className="bg-blue-600 dark:bg-blue-700 text-white px-4 py-2 rounded hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors font-medium"
-            onClick={() => {
-              setEditedFigures([...editedFigures, {
-                id: crypto.randomUUID(),
-                name: "",
-                difficulty: 0,
-                note: "",
-                youtube_url: "",
-                start_time: 0,
-                end_time: 0,
-                dance_style: dance,
-                visibility: 'private'
-              }
-              ])
-            }}
-          >
-            Add
-          </button>
-          <button
-            className="bg-gray-500 dark:bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600 dark:hover:bg-gray-600 transition-colors font-medium"
-            onClick={() => setEditMode(false)}
-          >
-            Cancel
-          </button>
-          <button
-            className="bg-green-600 dark:bg-green-700 text-white px-4 py-2 rounded hover:bg-green-700 dark:hover:bg-green-600 transition-colors font-medium"
-            onClick={saveChanges}
-          >
-            Save
-          </button>
+        <div className="flex gap-4 mb-4 flex-wrap">
+          <div className="flex gap-2">
+            <button
+              className="bg-blue-600 dark:bg-blue-700 text-white px-4 py-2 rounded hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors font-medium"
+              onClick={() => {
+                setEditedFigures([{
+                  id: crypto.randomUUID(),
+                  name: "",
+                  difficulty: 0,
+                  note: "",
+                  youtube_url: "",
+                  start_time: 0,
+                  end_time: 0,
+                  dance_style: dance,
+                  visibility: 'private'
+                }, ...editedFigures])
+              }}
+            >
+              Add
+            </button>
+            <button
+              className="bg-gray-500 dark:bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600 dark:hover:bg-gray-600 transition-colors font-medium"
+              onClick={() => {
+                setEditMode(false)
+                // Restore expansion state: transfer openVideosInEditMode back to openVideos
+                setOpenVideos(new Set(openVideosInEditMode))
+              }}
+            >
+              Cancel
+            </button>
+            <button
+              className="bg-green-600 dark:bg-green-700 text-white px-4 py-2 rounded hover:bg-green-700 dark:hover:bg-green-600 transition-colors font-medium"
+              onClick={saveChanges}
+            >
+              Save
+            </button>
+          </div>
+          <div className="flex gap-2 ml-auto">
+            <button
+              className="bg-blue-500 dark:bg-blue-700 text-white px-4 py-2 rounded hover:bg-blue-600 dark:hover:bg-blue-600 transition-colors font-medium"
+              onClick={() => { setOpenVideosInEditMode(new Set(editedFigures.map(f => f.id))) }}
+            >
+              View All
+            </button>
+            <button
+              className="bg-gray-500 dark:bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600 dark:hover:bg-gray-600 transition-colors font-medium"
+              onClick={() => { setOpenVideosInEditMode(new Set()) }}
+            >
+              Collapse All
+            </button>
+          </div>
         </div>
       )}
 
       <table className="w-full border-collapse">
         <thead>
           <tr className="border-b dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+            {editMode && <th className="text-left p-2 text-gray-900 dark:text-white">Video</th>}
             <th className="text-left p-2 text-gray-900 dark:text-white">Name</th>
             <th className="text-left p-2 text-gray-900 dark:text-white">Difficulty 1-5</th>
             <th className="text-left p-2 text-gray-900 dark:text-white">Notes</th>
-            <th className="text-left p-2 text-gray-900 dark:text-white">Videos</th>
+            <th className="text-left p-2 text-gray-900 dark:text-white">YouTube URL</th>
+            <th className="text-left p-2 text-gray-900 dark:text-white">Start Time</th>
+            <th className="text-left p-2 text-gray-900 dark:text-white">End Time</th>
             {editMode && <th className="text-left p-2 text-gray-900 dark:text-white">Visibility</th>}
+            {editMode && <th className="text-left p-2 text-gray-900 dark:text-white">Action</th>}
           </tr>
         </thead>
 
@@ -436,6 +467,18 @@ export default function FiguresPage() {
 
                 <React.Fragment key={figure.id}>
                   <tr className="border-b">
+                    {/* Expand/Collapse button in edit mode */}
+                    <td className="p-2 text-center">
+                      {videoId && (
+                        <button
+                          className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium"
+                          onClick={() => toggleVideoInEditMode(figure.id)}
+                          title={openVideosInEditMode.has(figure.id) ? "Collapse video" : "Expand video"}
+                        >
+                          {openVideosInEditMode.has(figure.id) ? "▶" : "▼"}
+                        </button>
+                      )}
+                    </td>
 
                     <td className="p-2">
                       <input
@@ -497,14 +540,25 @@ export default function FiguresPage() {
                       <input
                         type="text"
                         className="border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white p-1 w-24"
-                        placeholder="mm:ss"
-                        defaultValue={formatSecondsToTime(figure.start_time)}
+                        placeholder="hh:mm:ss"
+                        value={formatSecondsToTime(figure.start_time)}
+                        onFocus={(e) => {
+                          if (figure.start_time === 0) {
+                            e.target.value = ""
+                          }
+                        }}
+                        onBlur={(e) => {
+                          if (e.target.value === "") {
+                            e.target.value = formatSecondsToTime(0)
+                          }
+                        }}
                         onChange={(e) => {
                           const parsed = parseTimeToSeconds(e.target.value)
                           const updated = [...editedFigures]
                           updated[index].start_time = parsed
                           setEditedFigures(updated)
                         }}
+                        style={figure.start_time === 0 ? { color: '#9ca3af' } : {}}
                       />
                     </td>
 
@@ -512,14 +566,25 @@ export default function FiguresPage() {
                       <input
                         type="text"
                         className="border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white p-1 w-24"
-                        placeholder="mm:ss"
-                        defaultValue={formatSecondsToTime(figure.end_time)}
+                        placeholder="hh:mm:ss"
+                        value={formatSecondsToTime(figure.end_time)}
+                        onFocus={(e) => {
+                          if (figure.end_time === 0) {
+                            e.target.value = ""
+                          }
+                        }}
+                        onBlur={(e) => {
+                          if (e.target.value === "") {
+                            e.target.value = formatSecondsToTime(0)
+                          }
+                        }}
                         onChange={(e) => {
                           const parsed = parseTimeToSeconds(e.target.value)
                           const updated = [...editedFigures]
                           updated[index].end_time = parsed
                           setEditedFigures(updated)
                         }}
+                        style={figure.end_time === 0 ? { color: '#9ca3af' } : {}}
                       />
                     </td>
 
@@ -538,7 +603,7 @@ export default function FiguresPage() {
                       </select>
                     </td>
 
-                    <td>
+                    <td className="p-2">
                       <button
                         className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 font-medium"
                         onClick={() => {
@@ -552,11 +617,11 @@ export default function FiguresPage() {
 
                   </tr>
 
-                  {videoId && (
+                  {videoId && openVideosInEditMode.has(figure.id) && (
 
                     <tr className="border-b dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
 
-                      <td colSpan={8} className="p-4">
+                      <td colSpan={9} className="p-4">
 
                         <iframe
                           width="420"
