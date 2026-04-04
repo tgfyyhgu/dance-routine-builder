@@ -77,6 +77,7 @@ export default function FiguresPage() {
   const [editMode, setEditMode] = useState(false)
   const [editedFigures, setEditedFigures] = useState<Figure[]>([])
   const [openVideosInEditMode, setOpenVideosInEditMode] = useState<Set<string>>(new Set())
+  const [editingFigureId, setEditingFigureId] = useState<string | null>(null)
   const tableBodyRef = useRef<HTMLTableSectionElement>(null)
 
 
@@ -235,8 +236,9 @@ export default function FiguresPage() {
         setFigures(cleanedData)
       }
       
-      // Restore expansion state before exiting edit mode
-      setOpenVideos(new Set(openVideosInEditMode))
+      // Collapse all videos when exiting edit mode
+      setOpenVideosInEditMode(new Set())
+      setEditingFigureId(null)
       setEditMode(false)
       alert("Changes saved successfully!")
 
@@ -330,8 +332,9 @@ export default function FiguresPage() {
                 return bTime - aTime
               })
               setEditedFigures(sorted)
-                // Preserve expansion state: transfer openVideos to openVideosInEditMode
-                setOpenVideosInEditMode(new Set(openVideos))
+                // Collapse all videos when entering edit mode
+                setOpenVideosInEditMode(new Set())
+                setEditingFigureId(null)
                 setEditMode(true)
               }}
             >
@@ -396,6 +399,9 @@ export default function FiguresPage() {
                   dance_style: dance,
                   visibility: 'private'
                 }, ...editedFigures])
+                // Collapse all videos when adding new figure
+                setOpenVideosInEditMode(new Set())
+                setEditingFigureId(null)
               }}
             >
               Add
@@ -404,8 +410,9 @@ export default function FiguresPage() {
               className="bg-gray-500 dark:bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600 dark:hover:bg-gray-600 transition-colors font-medium"
               onClick={() => {
                 setEditMode(false)
-                // Restore expansion state: transfer openVideosInEditMode back to openVideos
-                setOpenVideos(new Set(openVideosInEditMode))
+                // Collapse all videos when canceling
+                setOpenVideosInEditMode(new Set())
+                setEditingFigureId(null)
               }}
             >
               Cancel
@@ -417,29 +424,14 @@ export default function FiguresPage() {
               Save
             </button>
           </div>
-          <div className="flex gap-2 ml-auto">
-            <button
-              className="bg-blue-500 dark:bg-blue-700 text-white px-4 py-2 rounded hover:bg-blue-600 dark:hover:bg-blue-600 transition-colors font-medium"
-              onClick={() => { setOpenVideosInEditMode(new Set(editedFigures.map(f => f.id))) }}
-            >
-              View All
-            </button>
-            <button
-              className="bg-gray-500 dark:bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600 dark:hover:bg-gray-600 transition-colors font-medium"
-              onClick={() => { setOpenVideosInEditMode(new Set()) }}
-            >
-              Collapse All
-            </button>
-          </div>
         </div>
       )}
 
       <table className="w-full border-collapse">
         <thead>
           <tr className="border-b dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
-            {editMode && <th className="text-left p-2 text-gray-900 dark:text-white">Video</th>}
             <th className="text-left p-2 text-gray-900 dark:text-white">Name</th>
-            <th className="text-left p-2 text-gray-900 dark:text-white">Difficulty 1-5</th>
+            <th className="text-left p-2 text-gray-900 dark:text-white">Difficulty</th>
             <th className="text-left p-2 text-gray-900 dark:text-white">Notes</th>
             <th className="text-left p-2 text-gray-900 dark:text-white">YouTube URL</th>
             <th className="text-left p-2 text-gray-900 dark:text-white">Start Time</th>
@@ -467,28 +459,26 @@ export default function FiguresPage() {
 
                 <React.Fragment key={figure.id}>
                   <tr className="border-b">
-                    {/* Expand/Collapse button in edit mode */}
-                    <td className="p-2 text-center">
-                      {videoId && (
-                        <button
-                          className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium"
-                          onClick={() => toggleVideoInEditMode(figure.id)}
-                          title={openVideosInEditMode.has(figure.id) ? "Collapse video" : "Expand video"}
-                        >
-                          {openVideosInEditMode.has(figure.id) ? "▶" : "▼"}
-                        </button>
-                      )}
-                    </td>
-
                     <td className="p-2">
-                      <input
-                        className="border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white p-1 w-full"
+                      <textarea
+                        className="border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white p-1 w-full resize-none font-medium"
                         value={figure.name}
+                        onFocus={() => {
+                          setEditingFigureId(figure.id)
+                          if (figure.youtube_url) {
+                            setOpenVideosInEditMode(new Set([figure.id]))
+                          } else {
+                            setOpenVideosInEditMode(new Set())
+                          }
+                        }}
                         onChange={(e) => {
                           const updated = [...editedFigures]
                           updated[index].name = e.target.value
                           setEditedFigures(updated)
+                          e.target.style.height = 'auto'
+                          e.target.style.height = `${e.target.scrollHeight}px`
                         }}
+                        style={{ minHeight: '42px' }}
                       />
                     </td>
 
@@ -496,30 +486,49 @@ export default function FiguresPage() {
                       <select
                         className="border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white p-1 w-20"
                         value={figure.difficulty}
+                        onFocus={() => {
+                          setEditingFigureId(figure.id)
+                          if (figure.youtube_url) {
+                            setOpenVideosInEditMode(new Set([figure.id]))
+                          } else {
+                            setOpenVideosInEditMode(new Set())
+                          }
+                        }}
                         onChange={(e) => {
                           const updated = [...editedFigures]
                           updated[index].difficulty = Number(e.target.value)
                           setEditedFigures(updated)
                         }}
                       >
-                        <option value="0">0 (None)</option>
-                        <option value="1">1 ⭐</option>
-                        <option value="2">2 ⭐⭐</option>
-                        <option value="3">3 ⭐⭐⭐</option>
-                        <option value="4">4 ⭐⭐⭐⭐</option>
-                        <option value="5">5 ⭐⭐⭐⭐⭐</option>
+                        <option value="0">0</option>
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
                       </select>
                     </td>
 
                     <td className="p-2">
-                      <input
-                        className="border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white p-1 w-full"
+                      <textarea
+                        className="border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white p-1 w-full resize-none"
                         value={figure.note}
+                        onFocus={() => {
+                          setEditingFigureId(figure.id)
+                          if (figure.youtube_url) {
+                            setOpenVideosInEditMode(new Set([figure.id]))
+                          } else {
+                            setOpenVideosInEditMode(new Set())
+                          }
+                        }}
                         onChange={(e) => {
                           const updated = [...editedFigures]
                           updated[index].note = e.target.value
                           setEditedFigures(updated)
+                          e.target.style.height = 'auto'
+                          e.target.style.height = `${e.target.scrollHeight}px`
                         }}
+                        style={{ minHeight: '42px' }}
                       />
                     </td>
 
@@ -528,10 +537,19 @@ export default function FiguresPage() {
                         className="border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white p-1 w-full"
                         placeholder="YouTube URL"
                         value={figure.youtube_url}
+                        onFocus={() => {
+                          setEditingFigureId(figure.id)
+                        }}
                         onChange={(e) => {
                           const updated = [...editedFigures]
                           updated[index].youtube_url = e.target.value
                           setEditedFigures(updated)
+                          // Expand video when YouTube URL is entered
+                          if (e.target.value) {
+                            setOpenVideosInEditMode(new Set([figure.id]))
+                          } else {
+                            setOpenVideosInEditMode(new Set())
+                          }
                         }}
                       />
                     </td>
@@ -543,6 +561,12 @@ export default function FiguresPage() {
                         placeholder="hh:mm:ss"
                         value={formatSecondsToTime(figure.start_time)}
                         onFocus={(e) => {
+                          setEditingFigureId(figure.id)
+                          if (figure.youtube_url) {
+                            setOpenVideosInEditMode(new Set([figure.id]))
+                          } else {
+                            setOpenVideosInEditMode(new Set())
+                          }
                           if (figure.start_time === 0) {
                             e.target.value = ""
                           }
@@ -569,6 +593,12 @@ export default function FiguresPage() {
                         placeholder="hh:mm:ss"
                         value={formatSecondsToTime(figure.end_time)}
                         onFocus={(e) => {
+                          setEditingFigureId(figure.id)
+                          if (figure.youtube_url) {
+                            setOpenVideosInEditMode(new Set([figure.id]))
+                          } else {
+                            setOpenVideosInEditMode(new Set())
+                          }
                           if (figure.end_time === 0) {
                             e.target.value = ""
                           }
@@ -592,6 +622,14 @@ export default function FiguresPage() {
                       <select
                         className="border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white p-1 w-full text-sm"
                         value={figure.visibility || 'private'}
+                        onFocus={() => {
+                          setEditingFigureId(figure.id)
+                          if (figure.youtube_url) {
+                            setOpenVideosInEditMode(new Set([figure.id]))
+                          } else {
+                            setOpenVideosInEditMode(new Set())
+                          }
+                        }}
                         onChange={(e) => {
                           const updated = [...editedFigures]
                           updated[index].visibility = e.target.value as 'private' | 'public'
@@ -621,7 +659,7 @@ export default function FiguresPage() {
 
                     <tr className="border-b dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
 
-                      <td colSpan={9} className="p-4">
+                      <td colSpan={8} className="p-4">
 
                         <iframe
                           width="420"
