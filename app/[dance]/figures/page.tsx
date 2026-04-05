@@ -520,7 +520,8 @@ export default function FiguresPage() {
                   <tr className="border-b text-sm">
                     <td className="p-1">
                       <textarea
-                        className="border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white p-1 w-full resize-none font-medium text-xs"
+                        rows={1}
+                        className="border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white p-1 w-full resize-none font-medium text-xs overflow-hidden"
                         value={figure.name}
                         onFocus={() => {
                           setEditingFigureId(figure.id)
@@ -537,7 +538,7 @@ export default function FiguresPage() {
                           e.target.style.height = 'auto'
                           e.target.style.height = `${e.target.scrollHeight}px`
                         }}
-                        style={{ minHeight: 'auto', lineHeight: '1.2' }}
+                        style={{ lineHeight: '1.2' }}
                       />
                     </td>
 
@@ -570,7 +571,8 @@ export default function FiguresPage() {
 
                     <td className="p-1">
                       <textarea
-                        className="border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white p-1 w-full resize-none text-xs"
+                        rows={1}
+                        className="border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white p-1 w-full resize-none text-xs overflow-hidden"
                         value={figure.note}
                         onFocus={() => {
                           setEditingFigureId(figure.id)
@@ -587,7 +589,7 @@ export default function FiguresPage() {
                           e.target.style.height = 'auto'
                           e.target.style.height = `${e.target.scrollHeight}px`
                         }}
-                        style={{ minHeight: 'auto', lineHeight: '1.2' }}
+                        style={{ lineHeight: '1.2' }}
                       />
                     </td>
 
