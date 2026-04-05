@@ -319,9 +319,9 @@ export default function FiguresPage() {
   return (
     <main className="bg-gray-50 dark:bg-gray-950">
       {/* Navigation Header */}
-      <div className="border-b dark:border-gray-800 bg-white dark:bg-gray-900 px-6 py-3">
+      <div className="border-b dark:border-gray-800 bg-white dark:bg-gray-900 px-6 py-2">
         <div className="flex justify-between items-center">
-          <h1 className="text-lg font-bold text-gray-900 dark:text-white">{dance.toUpperCase()} - Manage Figures</h1>
+          <h1 className="text-base font-bold text-gray-900 dark:text-white">{dance.toUpperCase()} - Manage Figures</h1>
           <Link 
             href={`/${dance}/choreo`}
             className="bg-blue-500 dark:bg-blue-700 text-white px-2 py-1 rounded hover:bg-blue-600 dark:hover:bg-blue-600 transition-colors font-medium text-xs"
@@ -359,14 +359,14 @@ export default function FiguresPage() {
               setSearchTerm("")
               setDifficultyFilter("")
             }}
-            className="px-4 py-2 bg-gray-300 dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded hover:bg-gray-400 dark:hover:bg-gray-600 transition-colors font-medium"
+            className="px-3 py-1 bg-gray-300 dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded hover:bg-gray-400 dark:hover:bg-gray-600 transition-colors font-medium text-sm"
           >
             Clear Filters
           </button>
         )}
       </div>
 
-      <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
+      <p className="text-xs text-gray-600 dark:text-gray-400 mb-6">
         Showing {filteredFigures.length} of {figures.length} figures
       </p>
 
@@ -374,7 +374,7 @@ export default function FiguresPage() {
         <div className="flex justify-between mb-4">
           <div className="flex gap-2">
             <button
-              className="bg-yellow-500 dark:bg-yellow-600 text-white px-4 py-2 rounded hover:bg-yellow-600 dark:hover:bg-yellow-700 transition-colors font-medium"
+              className="bg-yellow-500 dark:bg-yellow-600 text-white px-3 py-1 rounded hover:bg-yellow-600 dark:hover:bg-yellow-700 transition-colors font-medium text-sm"
               onClick={() => {
                 // Only allow editing figures the user created
                 const userFigures = figures.filter(f => f.created_by === user?.id)
@@ -397,7 +397,7 @@ export default function FiguresPage() {
               Edit
             </button>
             <button
-              className="bg-green-600 dark:bg-green-700 text-white px-4 py-2 rounded hover:bg-green-700 dark:hover:bg-green-600 transition-colors font-medium text-sm"
+              className="bg-green-600 dark:bg-green-700 text-white px-3 py-1 rounded hover:bg-green-700 dark:hover:bg-green-600 transition-colors font-medium text-xs"
               onClick={async () => {
                 if (!confirm("This will update all figures in the database to use clean YouTube URLs (removing playlist parameters). This fixes videos that won't embed. Continue?")) return
                 
@@ -423,13 +423,13 @@ export default function FiguresPage() {
           </div>
           <div className="flex gap-4">
             <button
-              className="bg-blue-500 dark:bg-blue-700 text-white px-4 py-2 rounded hover:bg-blue-600 dark:hover:bg-blue-600 transition-colors font-medium"
+              className="bg-blue-500 dark:bg-blue-700 text-white px-3 py-1 rounded hover:bg-blue-600 dark:hover:bg-blue-600 transition-colors font-medium text-sm"
               onClick={() => { setOpenVideos(new Set(figures.map(f => f.id))) }}
             >
               View All
             </button>
             <button
-              className="bg-gray-500 dark:bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600 dark:hover:bg-gray-600 transition-colors font-medium"
+              className="bg-gray-500 dark:bg-gray-700 text-white px-3 py-1 rounded hover:bg-gray-600 dark:hover:bg-gray-600 transition-colors font-medium text-sm"
               onClick={() => { setOpenVideos(new Set()) }}
             >
               Collapse All
@@ -442,7 +442,7 @@ export default function FiguresPage() {
         <div className="flex gap-4 mb-4 flex-wrap">
           <div className="flex gap-2">
             <button
-              className="bg-blue-600 dark:bg-blue-700 text-white px-4 py-2 rounded hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors font-medium"
+              className="bg-blue-600 dark:bg-blue-700 text-white px-3 py-1 rounded hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors font-medium text-sm"
               onClick={() => {
                 setEditedFigures([{
                   id: crypto.randomUUID(),
@@ -463,7 +463,7 @@ export default function FiguresPage() {
               Add
             </button>
             <button
-              className="bg-gray-500 dark:bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600 dark:hover:bg-gray-600 transition-colors font-medium"
+              className="bg-gray-500 dark:bg-gray-700 text-white px-3 py-1 rounded hover:bg-gray-600 dark:hover:bg-gray-600 transition-colors font-medium text-sm"
               onClick={() => {
                 setEditMode(false)
                 // Collapse all videos when canceling
@@ -475,7 +475,7 @@ export default function FiguresPage() {
               Cancel
             </button>
             <button
-              className="bg-green-600 dark:bg-green-700 text-white px-4 py-2 rounded hover:bg-green-700 dark:hover:bg-green-600 transition-colors font-medium"
+              className="bg-green-600 dark:bg-green-700 text-white px-3 py-1 rounded hover:bg-green-700 dark:hover:bg-green-600 transition-colors font-medium text-sm"
               onClick={saveChanges}
             >
               Save
@@ -484,17 +484,17 @@ export default function FiguresPage() {
         </div>
       )}
 
-      <table className="w-full border-collapse">
+      <table className="w-full border-collapse text-sm">
         <thead>
           <tr className="border-b dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
-            <th className="text-left p-2 text-gray-900 dark:text-white">Name</th>
-            <th className="text-left p-2 text-gray-900 dark:text-white">Difficulty</th>
-            <th className="text-left p-2 text-gray-900 dark:text-white">Notes</th>
-            <th className="text-left p-2 text-gray-900 dark:text-white">YouTube URL</th>
-            <th className="text-left p-2 text-gray-900 dark:text-white">Start Time</th>
-            <th className="text-left p-2 text-gray-900 dark:text-white">End Time</th>
-            {editMode && <th className="text-left p-2 text-gray-900 dark:text-white">Visibility</th>}
-            {editMode && <th className="text-left p-2 text-gray-900 dark:text-white">Action</th>}
+            <th className="text-left p-1 text-gray-900 dark:text-white text-xs font-semibold">Name</th>
+            <th className="text-left p-1 text-gray-900 dark:text-white text-xs font-semibold">Difficulty</th>
+            <th className="text-left p-1 text-gray-900 dark:text-white text-xs font-semibold">Notes</th>
+            <th className="text-left p-1 text-gray-900 dark:text-white text-xs font-semibold">YouTube URL</th>
+            <th className="text-left p-1 text-gray-900 dark:text-white text-xs font-semibold">Start Time</th>
+            <th className="text-left p-1 text-gray-900 dark:text-white text-xs font-semibold">End Time</th>
+            {editMode && <th className="text-left p-1 text-gray-900 dark:text-white text-xs font-semibold">Visibility</th>}
+            {editMode && <th className="text-left p-1 text-gray-900 dark:text-white text-xs font-semibold">Action</th>}
           </tr>
         </thead>
 
@@ -515,10 +515,10 @@ export default function FiguresPage() {
               return (
 
                 <React.Fragment key={figure.id}>
-                  <tr className="border-b">
-                    <td className="p-2">
+                  <tr className="border-b text-sm">
+                    <td className="p-1">
                       <textarea
-                        className="border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white p-1 w-full resize-none font-medium"
+                        className="border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white p-1 w-full resize-none font-medium text-xs"
                         value={figure.name}
                         onFocus={() => {
                           setEditingFigureId(figure.id)
@@ -539,9 +539,9 @@ export default function FiguresPage() {
                       />
                     </td>
 
-                    <td className="p-2">
+                    <td className="p-1">
                       <select
-                        className="border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white p-1 w-20"
+                        className="border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white p-1 w-20 text-xs"
                         value={figure.difficulty}
                         onFocus={() => {
                           setEditingFigureId(figure.id)
@@ -566,9 +566,9 @@ export default function FiguresPage() {
                       </select>
                     </td>
 
-                    <td className="p-2">
+                    <td className="p-1">
                       <textarea
-                        className="border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white p-1 w-full resize-none"
+                        className="border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white p-1 w-full resize-none text-xs"
                         value={figure.note}
                         onFocus={() => {
                           setEditingFigureId(figure.id)
@@ -589,10 +589,9 @@ export default function FiguresPage() {
                       />
                     </td>
 
-                    <td className="p-2">
+                    <td className="p-1">
                       <input
-                        className="border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white p-1 w-full"
-                        placeholder="YouTube URL"
+                        className="border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white p-1 w-full text-xs"
                         value={figure.youtube_url}
                         onFocus={() => {
                           setEditingFigureId(figure.id)
@@ -681,9 +680,9 @@ export default function FiguresPage() {
                       />
                     </td>
 
-                    <td className="p-2">
+                    <td className="p-1">
                       <select
-                        className="border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white p-1 w-full text-sm"
+                        className="border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white p-1 w-full text-xs"
                         value={figure.visibility || 'private'}
                         onFocus={() => {
                           setEditingFigureId(figure.id)
@@ -704,9 +703,9 @@ export default function FiguresPage() {
                       </select>
                     </td>
 
-                    <td className="p-2">
+                    <td className="p-1">
                       <button
-                        className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 font-medium"
+                        className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 font-medium text-xs"
                         onClick={() => {
                           const updated = editedFigures.filter((_, i) => i !== index)
                           setEditedFigures(updated)
@@ -722,7 +721,7 @@ export default function FiguresPage() {
 
                     <tr className="border-b dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
 
-                      <td colSpan={8} className="p-4">
+                      <td colSpan={8} className="p-2">
 
                         <iframe
                           width="420"
