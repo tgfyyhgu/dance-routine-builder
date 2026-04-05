@@ -105,8 +105,23 @@ export default function AccountPopup({ onClose }: AccountPopupProps) {
         .delete()
         .eq('created_by', user.id)
 
-      if (routinesError || figuresError || sharesError) {
-        setClearDataStatus('❌ Failed to clear some data')
+      // Ignore errors if they're just about no matching rows - consider it a success
+      // since the goal is to have no data anyway
+      if (routinesError && routinesError.code !== 'PGRST116') {
+        console.error('Routines delete error:', routinesError)
+        setClearDataStatus('❌ Failed to clear routines')
+        setIsClearingData(false)
+        return
+      }
+      if (figuresError && figuresError.code !== 'PGRST116') {
+        console.error('Figures delete error:', figuresError)
+        setClearDataStatus('❌ Failed to clear figures')
+        setIsClearingData(false)
+        return
+      }
+      if (sharesError && sharesError.code !== 'PGRST116') {
+        console.error('Shares delete error:', sharesError)
+        setClearDataStatus('❌ Failed to clear shares')
         setIsClearingData(false)
         return
       }
