@@ -491,7 +491,7 @@ export default function FiguresPage() {
             <th className="text-left p-1 text-gray-900 dark:text-white text-xs font-semibold">Difficulty</th>
             <th className="text-left p-1 text-gray-900 dark:text-white text-xs font-semibold">Notes</th>
             {!editMode && <th className="text-left p-1 text-gray-900 dark:text-white text-xs font-semibold">Visibility</th>}
-            <th className="text-left p-1 text-gray-900 dark:text-white text-xs font-semibold">Video</th>
+            {!editMode && <th className="text-left p-1 text-gray-900 dark:text-white text-xs font-semibold">Video</th>}
             {editMode && <th className="text-left p-1 text-gray-900 dark:text-white text-xs font-semibold">YouTube URL</th>}
             {editMode && <th className="text-left p-1 text-gray-900 dark:text-white text-xs font-semibold whitespace-nowrap">Start</th>}
             {editMode && <th className="text-left p-1 text-gray-900 dark:text-white text-xs font-semibold whitespace-nowrap">End</th>}
