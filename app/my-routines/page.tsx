@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabaseClient"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/lib/AuthContext"
 import { createShareLink, copyToClipboard } from "@/lib/sharing"
+import Header from "@/components/Header"
 
 interface SavedRoutine {
   id: string
@@ -189,24 +190,21 @@ export default function MyRoutinesPage() {
 
   if (loading) {
     return (
-      <main className="bg-gray-50 dark:bg-gray-950 flex items-center justify-center p-6 min-h-[60vh]">
-        <p className="text-lg text-gray-600 dark:text-gray-400">Loading routines...</p>
-      </main>
+      <>
+        <Header />
+        <main className="bg-gray-50 dark:bg-gray-950 flex items-center justify-center p-6 min-h-[60vh]">
+          <p className="text-lg text-gray-600 dark:text-gray-400">Loading routines...</p>
+        </main>
+      </>
     )
   }
 
   return (
-    <main className="bg-gray-50 dark:bg-gray-950 py-12 px-6">
+    <>
+      <Header />
+      <main className="bg-gray-50 dark:bg-gray-950 py-12 px-6">
       <div className="max-w-4xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-white">My Routines</h1>
-          <Link
-            href="/"
-            className="bg-blue-500 dark:bg-blue-700 text-white px-4 py-2 rounded hover:bg-blue-600 dark:hover:bg-blue-600 transition-colors font-medium"
-          >
-            ← Back
-          </Link>
-        </div>
+        <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-8">My Routines</h1>
 
         {routines.length === 0 ? (
           <div className="bg-white dark:bg-gray-900 rounded-lg shadow dark:shadow-lg p-12 text-center border dark:border-gray-800">
@@ -346,6 +344,7 @@ export default function MyRoutinesPage() {
           </div>
         </div>
       )}
-    </main>
+      </main>
+    </>
   )
 }

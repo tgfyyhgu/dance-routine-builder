@@ -19,6 +19,7 @@ import { useAuth } from "@/lib/AuthContext"
 import RoutineBuilder from "@/components/RoutineBuilder"
 import RoutinePlayer from "@/components/RoutinePlayer"
 import FigurePanel from "@/components/FigurePanel"
+import Header from "@/components/Header"
 // Types & utilities
 import { Figure, RoutineStep } from "@/types/routine"
 import { v4 as uuid } from "uuid"
@@ -629,17 +630,7 @@ export default function ChoreoPage() {
     >
       <div className="flex flex-col bg-white dark:bg-gray-950">
         {/* Header */}
-        <div className="border-b dark:border-gray-800 bg-white dark:bg-gray-900 px-6 py-3">
-          <div className="flex justify-between items-center">
-            <h1 className="text-lg font-bold text-gray-900 dark:text-white">{dance.toUpperCase()} - Choreography Builder</h1>
-            <Link 
-              href={`/${dance}/figures`}
-              className="bg-blue-500 dark:bg-blue-700 text-white px-2 py-1 rounded hover:bg-blue-600 dark:hover:bg-blue-600 transition-colors font-medium text-xs"
-            >
-              📚 Manage Figures
-            </Link>
-          </div>
-        </div>
+        <Header danceName={dance} currentPage="choreo" />
 
         {/* Main content */}
         <div className="flex flex-1 overflow-hidden bg-white dark:bg-gray-950">

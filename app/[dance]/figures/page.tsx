@@ -4,6 +4,7 @@ import React, { useEffect, useState, useRef } from "react"
 import { useParams } from "next/navigation"
 import { supabase } from "@/lib/supabaseClient"
 import FigureCard from "@/components/FigureCard"
+import Header from "@/components/Header"
 import Link from "next/link"
 import { parseTimeToSeconds, formatSecondsToTime } from "@/lib/timeUtils"
 import { useAuth } from "@/lib/AuthContext"
@@ -317,19 +318,9 @@ export default function FiguresPage() {
   }
 
   return (
-    <main className="bg-gray-50 dark:bg-gray-950">
-      {/* Navigation Header */}
-      <div className="border-b dark:border-gray-800 bg-white dark:bg-gray-900 px-6 py-2">
-        <div className="flex justify-between items-center">
-          <h1 className="text-base font-bold text-gray-900 dark:text-white">{dance.toUpperCase()} - Manage Figures</h1>
-          <Link 
-            href={`/${dance}/choreo`}
-            className="bg-blue-500 dark:bg-blue-700 text-white px-2 py-1 rounded hover:bg-blue-600 dark:hover:bg-blue-600 transition-colors font-medium text-xs"
-          >
-            🎬 Choreography Builder
-          </Link>
-        </div>
-      </div>
+    <>
+      <Header danceName={dance} currentPage="figures" />
+      <main className="bg-gray-50 dark:bg-gray-950">
 
       <div className="p-10">
       <div className="flex gap-4 mb-8 items-center flex-wrap">
@@ -761,5 +752,6 @@ export default function FiguresPage() {
       </table>
       </div>
     </main>
+    </>
   )
 }
