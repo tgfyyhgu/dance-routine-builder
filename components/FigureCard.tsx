@@ -78,6 +78,10 @@ export default function FigureCard({
       <td className="p-2 text-gray-600 dark:text-gray-400 text-xs max-w-xs overflow-auto">{note}</td>
 
       <td className="p-2 text-center text-xs">
+        {visibility === 'private' ? '🔒' : '🌍'}
+      </td>
+
+      <td className="p-2 text-center text-xs">
         {videoId && <span className="text-blue-600 dark:text-blue-400 text-xs">{videoVisible ? "▶" : "▼"}</span>}
       </td>
 

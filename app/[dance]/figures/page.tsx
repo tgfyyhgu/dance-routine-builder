@@ -490,11 +490,13 @@ export default function FiguresPage() {
             <th className="text-left p-1 text-gray-900 dark:text-white text-xs font-semibold">Name</th>
             <th className="text-left p-1 text-gray-900 dark:text-white text-xs font-semibold">Difficulty</th>
             <th className="text-left p-1 text-gray-900 dark:text-white text-xs font-semibold">Notes</th>
-            <th className="text-left p-1 text-gray-900 dark:text-white text-xs font-semibold">YouTube URL</th>
-            <th className="text-left p-1 text-gray-900 dark:text-white text-xs font-semibold">Start Time</th>
-            <th className="text-left p-1 text-gray-900 dark:text-white text-xs font-semibold">End Time</th>
-            {editMode && <th className="text-left p-1 text-gray-900 dark:text-white text-xs font-semibold">Visibility</th>}
-            {editMode && <th className="text-left p-1 text-gray-900 dark:text-white text-xs font-semibold">Action</th>}
+            {!editMode && <th className="text-left p-1 text-gray-900 dark:text-white text-xs font-semibold">Visibility</th>}
+            <th className="text-left p-1 text-gray-900 dark:text-white text-xs font-semibold">Video</th>
+            {editMode && <th className="text-left p-1 text-gray-900 dark:text-white text-xs font-semibold">YouTube URL</th>}
+            {editMode && <th className="text-left p-1 text-gray-900 dark:text-white text-xs font-semibold whitespace-nowrap">Start</th>}
+            {editMode && <th className="text-left p-1 text-gray-900 dark:text-white text-xs font-semibold whitespace-nowrap">End</th>}
+            {editMode && <th className="text-left p-1 text-gray-900 dark:text-white text-xs font-semibold w-12 text-center">Vis</th>}
+            {editMode && <th className="text-left p-1 text-gray-900 dark:text-white text-xs font-semibold w-8 text-center">Del</th>}
           </tr>
         </thead>
 
@@ -535,13 +537,13 @@ export default function FiguresPage() {
                           e.target.style.height = 'auto'
                           e.target.style.height = `${e.target.scrollHeight}px`
                         }}
-                        style={{ minHeight: '42px' }}
+                        style={{ minHeight: 'auto', lineHeight: '1.2' }}
                       />
                     </td>
 
                     <td className="p-1">
                       <select
-                        className="border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white p-1 w-20 text-xs"
+                        className="border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white p-0.5 w-12 text-xs"
                         value={figure.difficulty}
                         onFocus={() => {
                           setEditingFigureId(figure.id)
@@ -585,7 +587,7 @@ export default function FiguresPage() {
                           e.target.style.height = 'auto'
                           e.target.style.height = `${e.target.scrollHeight}px`
                         }}
-                        style={{ minHeight: '42px' }}
+                        style={{ minHeight: 'auto', lineHeight: '1.2' }}
                       />
                     </td>
 
@@ -610,10 +612,10 @@ export default function FiguresPage() {
                       />
                     </td>
 
-                    <td className="p-2">
+                    <td className="p-1">
                       <input
                         type="text"
-                        className="border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white p-1 w-24"
+                        className="border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white p-0.5 w-16 text-xs"
                         placeholder="hhmmss"
                         value={rawTimeInputs[figure.id]?.start ?? formatSecondsToTime(figure.start_time)}
                         onFocus={(e) => {
@@ -645,10 +647,10 @@ export default function FiguresPage() {
                       />
                     </td>
 
-                    <td className="p-2">
+                    <td className="p-1">
                       <input
                         type="text"
-                        className="border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white p-1 w-24"
+                        className="border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white p-0.5 w-16 text-xs"
                         placeholder="hhmmss"
                         value={rawTimeInputs[figure.id]?.end ?? formatSecondsToTime(figure.end_time)}
                         onFocus={(e) => {
@@ -680,38 +682,30 @@ export default function FiguresPage() {
                       />
                     </td>
 
-                    <td className="p-1">
-                      <select
-                        className="border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white p-1 w-full text-xs"
-                        value={figure.visibility || 'private'}
-                        onFocus={() => {
-                          setEditingFigureId(figure.id)
-                          if (figure.youtube_url) {
-                            setOpenVideosInEditMode(new Set([figure.id]))
-                          } else {
-                            setOpenVideosInEditMode(new Set())
-                          }
-                        }}
-                        onChange={(e) => {
+                    <td className="p-1 text-center">
+                      <button
+                        className="text-lg hover:opacity-70 transition-opacity"
+                        onClick={() => {
                           const updated = [...editedFigures]
-                          updated[index].visibility = e.target.value as 'private' | 'public'
+                          updated[index].visibility = figure.visibility === 'private' ? 'public' : 'private'
                           setEditedFigures(updated)
                         }}
+                        title={figure.visibility === 'private' ? 'Click to make public' : 'Click to make private'}
                       >
-                        <option value="private">🔒 Private</option>
-                        <option value="public">🌍 Public</option>
-                      </select>
+                        {figure.visibility === 'private' ? '🔒' : '🌍'}
+                      </button>
                     </td>
 
-                    <td className="p-1">
+                    <td className="p-1 text-center">
                       <button
-                        className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 font-medium text-xs"
+                        className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 font-medium text-sm hover:opacity-70 transition-opacity"
                         onClick={() => {
                           const updated = editedFigures.filter((_, i) => i !== index)
                           setEditedFigures(updated)
                         }}
+                        title="Delete figure"
                       >
-                        Delete
+                        🗑️
                       </button>
                     </td>
 
@@ -721,7 +715,7 @@ export default function FiguresPage() {
 
                     <tr className="border-b dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
 
-                      <td colSpan={8} className="p-2">
+                      <td colSpan={8} className="p-1">
 
                         <iframe
                           width="420"
