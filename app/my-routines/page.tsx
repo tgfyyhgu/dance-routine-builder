@@ -6,7 +6,6 @@ import { supabase } from "@/lib/supabaseClient"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/lib/AuthContext"
 import { createShareLink, copyToClipboard } from "@/lib/sharing"
-import Header from "@/components/Header"
 
 interface SavedRoutine {
   id: string
@@ -190,19 +189,14 @@ export default function MyRoutinesPage() {
 
   if (loading) {
     return (
-      <>
-        <Header />
-        <main className="bg-gray-50 dark:bg-gray-950 flex items-center justify-center p-6 min-h-[60vh]">
-          <p className="text-lg text-gray-600 dark:text-gray-400">Loading routines...</p>
-        </main>
-      </>
+      <main className="bg-gray-50 dark:bg-gray-950 flex items-center justify-center p-6 min-h-[60vh]">
+        <p className="text-lg text-gray-600 dark:text-gray-400">Loading routines...</p>
+      </main>
     )
   }
 
   return (
-    <>
-      <Header />
-      <main className="bg-gray-50 dark:bg-gray-950 py-12 px-6">
+    <main className="bg-gray-50 dark:bg-gray-950 py-12 px-6">
       <div className="max-w-4xl mx-auto">
         <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-8">My Routines</h1>
 
@@ -345,6 +339,5 @@ export default function MyRoutinesPage() {
         </div>
       )}
       </main>
-    </>
-  )
+    )
 }

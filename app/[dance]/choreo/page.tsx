@@ -19,7 +19,6 @@ import { useAuth } from "@/lib/AuthContext"
 import RoutineBuilder from "@/components/RoutineBuilder"
 import RoutinePlayer from "@/components/RoutinePlayer"
 import FigurePanel from "@/components/FigurePanel"
-import Header from "@/components/Header"
 // Types & utilities
 import { Figure, RoutineStep } from "@/types/routine"
 import { v4 as uuid } from "uuid"
@@ -629,9 +628,6 @@ export default function ChoreoPage() {
       autoScroll={false}
     >
       <div className="flex flex-col bg-white dark:bg-gray-950">
-        {/* Header */}
-        <Header danceName={dance} currentPage="choreo" />
-
         {/* Main content */}
         <div className="flex flex-1 overflow-hidden bg-white dark:bg-gray-950">
           {/* Left panel: Figures */}

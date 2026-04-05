@@ -3,6 +3,7 @@
 import React, { useState } from 'react'
 import Link from 'next/link'
 import { useAuth } from '@/lib/AuthContext'
+import { useParams, usePathname } from 'next/navigation'
 import AccountPopup from './AccountPopup'
 
 interface HeaderProps {
@@ -10,9 +11,22 @@ interface HeaderProps {
   readonly currentPage?: 'figures' | 'choreo'
 }
 
-export default function Header({ danceName, currentPage }: HeaderProps) {
+export default function Header({ danceName: propDanceName, currentPage: propCurrentPage }: HeaderProps) {
   const { user, loading } = useAuth()
   const [showAccountPopup, setShowAccountPopup] = useState(false)
+  const params = useParams()
+  const pathname = usePathname()
+
+  // Auto-detect dance name and current page from URL if not provided as props
+  const paramDance = params.dance as string | undefined
+  const danceName = propDanceName || paramDance
+
+  // Determine current page from pathname if not provided as props
+  let currentPage: 'figures' | 'choreo' | undefined = propCurrentPage
+  if (!currentPage) {
+    if (pathname?.includes('/figures')) currentPage = 'figures'
+    else if (pathname?.includes('/choreo')) currentPage = 'choreo'
+  }
 
   if (loading) return null
 

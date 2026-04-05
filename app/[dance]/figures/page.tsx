@@ -4,7 +4,6 @@ import React, { useEffect, useState, useRef } from "react"
 import { useParams } from "next/navigation"
 import { supabase } from "@/lib/supabaseClient"
 import FigureCard from "@/components/FigureCard"
-import Header from "@/components/Header"
 import Link from "next/link"
 import { parseTimeToSeconds, formatSecondsToTime } from "@/lib/timeUtils"
 import { useAuth } from "@/lib/AuthContext"
@@ -318,9 +317,7 @@ export default function FiguresPage() {
   }
 
   return (
-    <>
-      <Header danceName={dance} currentPage="figures" />
-      <main className="bg-gray-50 dark:bg-gray-950">
+    <main className="bg-gray-50 dark:bg-gray-950">
 
       <div className="p-10">
       <div className="flex gap-4 mb-8 items-center flex-wrap">
@@ -752,6 +749,5 @@ export default function FiguresPage() {
       </table>
       </div>
     </main>
-    </>
   )
 }
