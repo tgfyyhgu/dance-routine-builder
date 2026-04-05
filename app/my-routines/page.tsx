@@ -198,14 +198,14 @@ export default function MyRoutinesPage() {
   return (
     <main className="bg-gray-50 dark:bg-gray-950 py-12 px-6">
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-8">My Routines</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-8">My Routines</h1>
 
         {routines.length === 0 ? (
           <div className="bg-white dark:bg-gray-900 rounded-lg shadow dark:shadow-lg p-12 text-center border dark:border-gray-800">
-            <p className="text-gray-600 dark:text-gray-400 text-lg mb-4">No saved routines yet</p>
+            <p className="text-gray-600 dark:text-gray-400 text-sm mb-4">No saved routines yet</p>
             <Link
               href="/"
-              className="inline-block bg-blue-500 dark:bg-blue-700 text-white px-6 py-3 rounded hover:bg-blue-600 dark:hover:bg-blue-600 transition-colors font-medium"
+              className="inline-block bg-blue-500 dark:bg-blue-700 text-white px-4 py-2 rounded hover:bg-blue-600 dark:hover:bg-blue-600 transition-colors font-medium text-sm"
             >
               Create Your First Routine
             </Link>
@@ -214,24 +214,24 @@ export default function MyRoutinesPage() {
           <div className="space-y-8">
             {Object.entries(groupedByDance).map(([danceStyle, danceRoutines]) => (
               <div key={danceStyle} className="bg-white dark:bg-gray-900 rounded-lg shadow dark:shadow-lg overflow-hidden border dark:border-gray-800">
-                <div className="bg-gradient-to-r from-blue-500 to-blue-600 dark:from-blue-700 dark:to-blue-800 px-6 py-4">
-                  <h2 className="text-2xl font-bold text-white">{danceStyle.toUpperCase()}</h2>
+                <div className="bg-gradient-to-r from-blue-500 to-blue-600 dark:from-blue-700 dark:to-blue-800 px-6 py-3">
+                  <h2 className="text-lg font-bold text-white">{danceStyle.toUpperCase()}</h2>
                 </div>
 
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead className="bg-gray-100 dark:bg-gray-800 border-b dark:border-gray-700">
                       <tr>
-                        <th className="px-6 py-3 text-left font-semibold text-gray-900 dark:text-white">
+                        <th className="px-4 py-2 text-left font-semibold text-gray-900 dark:text-white text-xs">
                           Routine Name
                         </th>
-                        <th className="px-6 py-3 text-left font-semibold text-gray-900 dark:text-white">
+                        <th className="px-4 py-2 text-left font-semibold text-gray-900 dark:text-white text-xs">
                           Figures
                         </th>
-                        <th className="px-6 py-3 text-left font-semibold text-gray-900 dark:text-white">
+                        <th className="px-4 py-2 text-left font-semibold text-gray-900 dark:text-white text-xs">
                           Created
                         </th>
-                        <th className="px-6 py-3 text-right font-semibold text-gray-900 dark:text-white">
+                        <th className="px-4 py-2 text-right font-semibold text-gray-900 dark:text-white text-xs">
                           Actions
                         </th>
                       </tr>
@@ -239,36 +239,36 @@ export default function MyRoutinesPage() {
                     <tbody className="divide-y dark:divide-gray-700">
                       {danceRoutines.map(routine => (
                         <tr key={routine.id} className="hover:bg-gray-50 dark:hover:bg-gray-800 transition">
-                          <td className="px-6 py-4 font-medium text-gray-900 dark:text-white">{routine.name}</td>
-                          <td className="px-6 py-4 text-gray-600 dark:text-gray-400">
+                          <td className="px-4 py-2 font-medium text-gray-900 dark:text-white text-sm">{routine.name}</td>
+                          <td className="px-4 py-2 text-gray-600 dark:text-gray-400 text-sm">
                             {Array.isArray(routine.steps) ? routine.steps.length : 0} figures
                           </td>
-                          <td className="px-6 py-4 text-gray-600 dark:text-gray-400">
+                          <td className="px-4 py-2 text-gray-600 dark:text-gray-400 text-sm">
                             {new Date(routine.created_at).toLocaleDateString()}
                           </td>
-                          <td className="px-6 py-4 text-right space-x-3">
+                          <td className="px-4 py-2 text-right space-x-1">
                             <button
                               onClick={() => editRoutine(routine.id, routine.dance_style)}
-                              className="inline-block bg-green-500 dark:bg-green-700 text-white px-3 py-1 rounded hover:bg-green-600 dark:hover:bg-green-600 transition-colors text-sm font-medium"
+                              className="inline-block bg-green-500 dark:bg-green-700 text-white px-2 py-1 rounded hover:bg-green-600 dark:hover:bg-green-600 transition-colors text-xs font-medium"
                             >
                               ✏️ Edit
                             </button>
                             <button
                               onClick={() => duplicateRoutine(routine)}
-                              className="inline-block bg-cyan-500 dark:bg-cyan-700 text-white px-3 py-1 rounded hover:bg-cyan-600 dark:hover:bg-cyan-600 transition-colors text-sm font-medium"
+                              className="inline-block bg-cyan-500 dark:bg-cyan-700 text-white px-2 py-1 rounded hover:bg-cyan-600 dark:hover:bg-cyan-600 transition-colors text-xs font-medium"
                             >
                               📋 Copy
                             </button>
                             <button
                               onClick={() => shareRoutine(routine)}
                               disabled={shareLoading}
-                              className="inline-block bg-indigo-500 dark:bg-indigo-700 text-white px-3 py-1 rounded hover:bg-indigo-600 dark:hover:bg-indigo-600 disabled:opacity-50 transition-colors text-sm font-medium"
+                              className="inline-block bg-indigo-500 dark:bg-indigo-700 text-white px-2 py-1 rounded hover:bg-indigo-600 dark:hover:bg-indigo-600 disabled:opacity-50 transition-colors text-xs font-medium"
                             >
                               🔗 Share
                             </button>
                             <button
                               onClick={() => setDeleteConfirm(routine.id)}
-                              className="inline-block bg-red-500 dark:bg-red-700 text-white px-3 py-1 rounded hover:bg-red-600 dark:hover:bg-red-600 transition-colors text-sm font-medium"
+                              className="inline-block bg-red-500 dark:bg-red-700 text-white px-2 py-1 rounded hover:bg-red-600 dark:hover:bg-red-600 transition-colors text-xs font-medium"
                             >
                               🗑️ Delete
                             </button>
@@ -287,24 +287,24 @@ export default function MyRoutinesPage() {
       {/* Share Modal */}
       {shareModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-6 max-w-sm dark:text-white border dark:border-gray-800">
-            <h3 className="text-xl font-bold mb-4">Share Routine</h3>
-            <p className="text-gray-600 dark:text-gray-400 mb-4">
+          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-4 max-w-sm dark:text-white border dark:border-gray-800">
+            <h3 className="text-lg font-bold mb-3">Share Routine</h3>
+            <p className="text-gray-600 dark:text-gray-400 mb-3 text-xs">
               Your routine is now shareable! Copy the link below to share with coaches or dance partners.
             </p>
-            <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded mb-4 break-all text-sm font-mono text-gray-900 dark:text-gray-100">
+            <div className="bg-gray-100 dark:bg-gray-800 p-2 rounded mb-3 break-all text-xs font-mono text-gray-900 dark:text-gray-100">
               {shareModal.url}
             </div>
-            <div className="flex gap-3 justify-end">
+            <div className="flex gap-2 justify-end">
               <button
                 onClick={() => setShareModal(null)}
-                className="px-4 py-2 bg-gray-300 dark:bg-gray-700 text-gray-800 dark:text-white rounded hover:bg-gray-400 dark:hover:bg-gray-600 transition-colors font-medium"
+                className="px-3 py-1.5 bg-gray-300 dark:bg-gray-700 text-gray-800 dark:text-white rounded hover:bg-gray-400 dark:hover:bg-gray-600 transition-colors font-medium text-xs"
               >
                 Close
               </button>
               <button
                 onClick={copyShareLink}
-                className="px-4 py-2 bg-indigo-500 dark:bg-indigo-700 text-white rounded hover:bg-indigo-600 dark:hover:bg-indigo-600 transition-colors font-medium"
+                className="px-3 py-1.5 bg-indigo-500 dark:bg-indigo-700 text-white rounded hover:bg-indigo-600 dark:hover:bg-indigo-600 transition-colors font-medium text-xs"
               >
                 📋 Copy Link
               </button>
@@ -316,21 +316,21 @@ export default function MyRoutinesPage() {
       {/* Delete Confirmation Modal */}
       {deleteConfirm && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-6 max-w-sm dark:text-white border dark:border-gray-800">
-            <h3 className="text-xl font-bold mb-4">Delete Routine?</h3>
-            <p className="text-gray-600 dark:text-gray-400 mb-6">
+          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-4 max-w-sm dark:text-white border dark:border-gray-800">
+            <h3 className="text-lg font-bold mb-3">Delete Routine?</h3>
+            <p className="text-gray-600 dark:text-gray-400 mb-4 text-xs">
               This action cannot be undone. Are you sure you want to delete this routine?
             </p>
-            <div className="flex gap-3 justify-end">
+            <div className="flex gap-2 justify-end">
               <button
                 onClick={() => setDeleteConfirm(null)}
-                className="px-4 py-2 bg-gray-300 dark:bg-gray-700 text-gray-800 dark:text-white rounded hover:bg-gray-400 dark:hover:bg-gray-600 transition-colors font-medium"
+                className="px-3 py-1.5 bg-gray-300 dark:bg-gray-700 text-gray-800 dark:text-white rounded hover:bg-gray-400 dark:hover:bg-gray-600 transition-colors font-medium text-xs"
               >
                 Cancel
               </button>
               <button
                 onClick={() => deleteRoutine(deleteConfirm)}
-                className="px-4 py-2 bg-red-500 dark:bg-red-700 text-white rounded hover:bg-red-600 dark:hover:bg-red-600 transition-colors font-medium"
+                className="px-3 py-1.5 bg-red-500 dark:bg-red-700 text-white rounded hover:bg-red-600 dark:hover:bg-red-600 transition-colors font-medium text-xs"
               >
                 Delete
               </button>
