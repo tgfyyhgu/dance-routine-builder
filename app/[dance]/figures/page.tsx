@@ -25,9 +25,23 @@ interface Figure {
 function cleanYouTubeUrl(url: string): string {
   if (!url) return url
   
-  // Extract video ID using the same regex as RoutinePlayer
-  const regExp = /^.*(?:youtu\.be\/|watch\?v=)([^#&?]*).*/
-  const videoId = regExp.exec(url)?.[1]
+  // Try to extract video ID from different YouTube URL formats
+  // Handles: youtu.be/ID, watch?v=ID, watch?app=X&v=ID, etc.
+  let videoId: string | undefined
+  
+  // Try youtu.be format
+  const shortMatch = /youtu\.be\/([^#&?]+)/.exec(url)
+  if (shortMatch) {
+    videoId = shortMatch[1]
+  }
+  
+  // Try watch?v= format with v parameter (handles v= anywhere in query string)
+  if (!videoId) {
+    const watchMatch = /[?&]v=([^&#]+)/.exec(url)
+    if (watchMatch) {
+      videoId = watchMatch[1]
+    }
+  }
   
   // If we found a video ID, return clean URL; otherwise return original
   if (videoId) {

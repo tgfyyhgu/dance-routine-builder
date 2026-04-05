@@ -10,11 +10,29 @@ import { RoutineStep, YTPlayer } from "@/types/routine"
 // Helper to clean YouTube URLs (remove playlist parameters that prevent embedding)
 function cleanYouTubeUrl(url: string): string {
   if (!url) return url
-  const regExp = /^.*(?:youtu\.be\/|watch\?v=)([^#&?]*).*/
-  const videoId = regExp.exec(url)?.[1]
+  
+  // Try to extract video ID from different YouTube URL formats
+  // Handles: youtu.be/ID, watch?v=ID, watch?app=X&v=ID, etc.
+  let videoId: string | undefined
+  
+  // Try youtu.be format
+  const shortMatch = /youtu\.be\/([^#&?]+)/.exec(url)
+  if (shortMatch) {
+    videoId = shortMatch[1]
+  }
+  
+  // Try watch?v= format with v parameter (handles v= anywhere in query string)
+  if (!videoId) {
+    const watchMatch = /[?&]v=([^&#]+)/.exec(url)
+    if (watchMatch) {
+      videoId = watchMatch[1]
+    }
+  }
+  
   if (videoId) {
     return `https://www.youtube.com/watch?v=${videoId}`
   }
+  
   return url
 }
 
@@ -45,13 +63,10 @@ export default function RoutinePlayer({
 
   const step = steps.length > 0 ? steps[currentStep] : null
 
-  const regExp =
-    /^.*(?:youtu\.be\/|watch\?v=)([^#&?]*).*/
-
   // Clean the URL to remove playlist parameters, then extract video ID
   const cleanedUrl = step?.figure.youtube_url ? cleanYouTubeUrl(step.figure.youtube_url) : null
-  const videoId = cleanedUrl 
-    ? (regExp.exec(cleanedUrl)?.[1] ?? null)
+  const videoId = cleanedUrl
+    ? (cleanedUrl.match(/v=([^&#]+)/)?.[1] ?? null)
     : null
 
   // Load YouTube API script
