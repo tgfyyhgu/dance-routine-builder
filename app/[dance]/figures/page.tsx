@@ -248,6 +248,7 @@ export default function FiguresPage() {
           .from("figures")
           .delete()
           .eq("id", id)
+          .eq("created_by", user?.id)
         if (error) {
           console.error("Delete error for id", id, ":", error)
           alert(`Error deleting figure: ${error.message}`)
