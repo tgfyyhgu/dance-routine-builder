@@ -91,7 +91,6 @@ export default function RoutinePlayer({
 
     // Clear any previous timeout
     if (initTimeoutRef.current) clearTimeout(initTimeoutRef.current)
-    setPlayerError(null)
 
     const startTime = step?.figure.start_time || 0
     const endTime = step?.figure.end_time || 0
