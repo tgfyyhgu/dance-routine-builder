@@ -109,7 +109,6 @@ export default function FiguresPage() {
   const [editingFigureId, setEditingFigureId] = useState<string | null>(null)
   const [rawTimeInputs, setRawTimeInputs] = useState<{ [figureId: string]: { start: string; end: string } }>({})
   const tableBodyRef = useRef<HTMLTableSectionElement>(null)
-  const debounceTimersRef = useRef<{ [figureId: string]: NodeJS.Timeout }>({})
 
 
   // Validate edited figures and sync with Supabase (delete, update, insert)
@@ -339,50 +338,6 @@ export default function FiguresPage() {
     const updated = new Set(openVideosInEditMode)
     if (updated.has(id)) { updated.delete(id) } else { updated.add(id) }
     setOpenVideosInEditMode(updated)
-  }
-
-  // Apply debounced time parsing to a figure's start/end time inputs
-  // This updates the figure's actual times after user stops editing
-  function debounceTimeUpdate(figureId: string) {
-    // Clear existing timer for this figure
-    if (debounceTimersRef.current[figureId]) {
-      clearTimeout(debounceTimersRef.current[figureId])
-    }
-
-    // Set new timer to parse and apply the times after 1s of no input
-    debounceTimersRef.current[figureId] = setTimeout(() => {
-      const rawInput = rawTimeInputs[figureId]
-      if (!rawInput) return
-
-      // Parse times (suppress error alerts during preview)
-      let newStartTime = undefined
-      let newEndTime = undefined
-
-      if (rawInput.start.trim()) {
-        const parsed = parseTimeInputToSeconds(rawInput.start, true)
-        if (parsed !== null) newStartTime = parsed
-      }
-
-      if (rawInput.end.trim()) {
-        const parsed = parseTimeInputToSeconds(rawInput.end, true)
-        if (parsed !== null) newEndTime = parsed
-      }
-
-      // Update the edited figure with parsed times (for video preview)
-      setEditedFigures(prev => prev.map(fig => {
-        if (fig.id === figureId) {
-          return {
-            ...fig,
-            start_time: newStartTime !== undefined ? newStartTime : fig.start_time,
-            end_time: newEndTime !== undefined ? newEndTime : fig.end_time
-          }
-        }
-        return fig
-      }))
-
-      // Clean up timer reference
-      delete debounceTimersRef.current[figureId]
-    }, 1000)
   }
 
   // Parse time string to seconds using strict rules
@@ -741,15 +696,21 @@ export default function FiguresPage() {
                           }
                         }}
                         onChange={(e) => {
+                          const newStart = e.target.value
                           setRawTimeInputs({
                             ...rawTimeInputs,
                             [figure.id]: {
-                              start: e.target.value,
+                              start: newStart,
                               end: rawTimeInputs[figure.id]?.end ?? ""
                             }
                           })
-                          // Debounce time parsing for video preview
-                          debounceTimeUpdate(figure.id)
+                          // Parse and update immediately for live preview
+                          const parsed = newStart.trim() ? parseTimeInputToSeconds(newStart, true) : 0
+                          if (parsed !== null) {
+                            setEditedFigures(prev => prev.map(fig => 
+                              fig.id === figure.id ? { ...fig, start_time: parsed } : fig
+                            ))
+                          }
                         }}
                         style={(rawTimeInputs[figure.id]?.start === "" || !rawTimeInputs[figure.id]?.start) && figure.start_time === 0 ? { color: '#9ca3af' } : {}}
                       />
@@ -779,15 +740,21 @@ export default function FiguresPage() {
                           }
                         }}
                         onChange={(e) => {
+                          const newEnd = e.target.value
                           setRawTimeInputs({
                             ...rawTimeInputs,
                             [figure.id]: {
                               start: rawTimeInputs[figure.id]?.start ?? "",
-                              end: e.target.value
+                              end: newEnd
                             }
                           })
-                          // Debounce time parsing for video preview
-                          debounceTimeUpdate(figure.id)
+                          // Parse and update immediately for live preview
+                          const parsed = newEnd.trim() ? parseTimeInputToSeconds(newEnd, true) : 0
+                          if (parsed !== null) {
+                            setEditedFigures(prev => prev.map(fig => 
+                              fig.id === figure.id ? { ...fig, end_time: parsed } : fig
+                            ))
+                          }
                         }}
                         style={(rawTimeInputs[figure.id]?.end === "" || !rawTimeInputs[figure.id]?.end) && figure.end_time === 0 ? { color: '#9ca3af' } : {}}
                       />
