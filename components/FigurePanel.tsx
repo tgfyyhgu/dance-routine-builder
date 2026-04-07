@@ -195,7 +195,14 @@ export default function FigurePanel({
             </p>
           </div>
 
-          {figures.map((fig) => (
+          {figures
+            .sort((a, b) => {
+              // Sort by created_at descending (newest first)
+              const aTime = (a as any).created_at ? new Date((a as any).created_at).getTime() : 0
+              const bTime = (b as any).created_at ? new Date((b as any).created_at).getTime() : 0
+              return bTime - aTime
+            })
+            .map((fig) => (
             <DraggableFigure
               key={fig.id}
               figure={fig}

@@ -19,6 +19,7 @@ interface Figure {
   dance_style: string
   visibility?: 'private' | 'public'
   created_by?: string
+  created_at?: string
 }
 
 // Helper function to clean YouTube URLs by removing playlist parameters
@@ -72,21 +73,34 @@ export default function FiguresPage() {
           ...fig,
           youtube_url: cleanYouTubeUrl(fig.youtube_url)
         }))
-        setFigures(cleanedData)
+        // Sort by created_at descending (newest first)
+        const sortedData = cleanedData.sort((a, b) => {
+          const aTime = a.created_at ? new Date(a.created_at).getTime() : 0
+          const bTime = b.created_at ? new Date(b.created_at).getTime() : 0
+          return bTime - aTime
+        })
+        setFigures(sortedData)
       }
     }
     loadFigures()
   }, [dance])
 
-  const filteredFigures = figures.filter((figure) => {
-    const matchesSearch =
-      figure.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      figure.note.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesDifficulty =
-      difficultyFilter === "" ||
-      figure.difficulty === Number(difficultyFilter)
-    return matchesSearch && matchesDifficulty
-  })
+  const filteredFigures = figures
+    .filter((figure) => {
+      const matchesSearch =
+        figure.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        figure.note.toLowerCase().includes(searchTerm.toLowerCase())
+      const matchesDifficulty =
+        difficultyFilter === "" ||
+        figure.difficulty === Number(difficultyFilter)
+      return matchesSearch && matchesDifficulty
+    })
+    .sort((a, b) => {
+      // Maintain created_at order (newest first)
+      const aTime = a.created_at ? new Date(a.created_at).getTime() : 0
+      const bTime = b.created_at ? new Date(b.created_at).getTime() : 0
+      return bTime - aTime
+    })
 
   const [editMode, setEditMode] = useState(false)
   const [editedFigures, setEditedFigures] = useState<Figure[]>([])
@@ -94,6 +108,7 @@ export default function FiguresPage() {
   const [editingFigureId, setEditingFigureId] = useState<string | null>(null)
   const [rawTimeInputs, setRawTimeInputs] = useState<{ [figureId: string]: { start: string; end: string } }>({})
   const tableBodyRef = useRef<HTMLTableSectionElement>(null)
+  const debounceTimersRef = useRef<{ [figureId: string]: NodeJS.Timeout }>({})
 
 
   // Validate edited figures and sync with Supabase (delete, update, insert)
@@ -323,6 +338,50 @@ export default function FiguresPage() {
     const updated = new Set(openVideosInEditMode)
     if (updated.has(id)) { updated.delete(id) } else { updated.add(id) }
     setOpenVideosInEditMode(updated)
+  }
+
+  // Apply debounced time parsing to a figure's start/end time inputs
+  // This updates the figure's actual times after user stops editing
+  function debounceTimeUpdate(figureId: string) {
+    // Clear existing timer for this figure
+    if (debounceTimersRef.current[figureId]) {
+      clearTimeout(debounceTimersRef.current[figureId])
+    }
+
+    // Set new timer to parse and apply the times after 800ms of no input
+    debounceTimersRef.current[figureId] = setTimeout(() => {
+      const rawInput = rawTimeInputs[figureId]
+      if (!rawInput) return
+
+      // Parse times
+      let newStartTime = undefined
+      let newEndTime = undefined
+
+      if (rawInput.start.trim()) {
+        const parsed = parseTimeInputToSeconds(rawInput.start)
+        if (parsed !== null) newStartTime = parsed
+      }
+
+      if (rawInput.end.trim()) {
+        const parsed = parseTimeInputToSeconds(rawInput.end)
+        if (parsed !== null) newEndTime = parsed
+      }
+
+      // Update the edited figure with parsed times (for video preview)
+      setEditedFigures(prev => prev.map(fig => {
+        if (fig.id === figureId) {
+          return {
+            ...fig,
+            start_time: newStartTime !== undefined ? newStartTime : fig.start_time,
+            end_time: newEndTime !== undefined ? newEndTime : fig.end_time
+          }
+        }
+        return fig
+      }))
+
+      // Clean up timer reference
+      delete debounceTimersRef.current[figureId]
+    }, 800)
   }
 
   // Parse time string to seconds using strict rules
@@ -677,6 +736,8 @@ export default function FiguresPage() {
                               end: rawTimeInputs[figure.id]?.end ?? ""
                             }
                           })
+                          // Debounce time parsing for video preview
+                          debounceTimeUpdate(figure.id)
                         }}
                         style={(rawTimeInputs[figure.id]?.start === "" || !rawTimeInputs[figure.id]?.start) && figure.start_time === 0 ? { color: '#9ca3af' } : {}}
                       />
@@ -712,6 +773,8 @@ export default function FiguresPage() {
                               end: e.target.value
                             }
                           })
+                          // Debounce time parsing for video preview
+                          debounceTimeUpdate(figure.id)
                         }}
                         style={(rawTimeInputs[figure.id]?.end === "" || !rawTimeInputs[figure.id]?.end) && figure.end_time === 0 ? { color: '#9ca3af' } : {}}
                       />
