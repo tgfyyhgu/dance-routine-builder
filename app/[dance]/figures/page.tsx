@@ -833,7 +833,7 @@ export default function FiguresPage() {
                           width="560"
                           height="315"
                           title={`${figure.id} - YouTube video`}
-                          src={`https://www.youtube.com/embed/${videoId}?start=${figure.start_time || 0}&end=${figure.end_time || ""}`}
+                          src={`https://www.youtube.com/embed/${videoId}?start=${figure.start_time || 0}${figure.end_time ? `&end=${figure.end_time}` : ""}`}
                           allowFullScreen
                         />
 
