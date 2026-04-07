@@ -111,6 +111,18 @@ export default function FiguresPage() {
   const [rawTimeInputs, setRawTimeInputs] = useState<{ [figureId: string]: { start: string; end: string } }>({})
   const tableBodyRef = useRef<HTMLTableSectionElement>(null)
 
+  // Apply same search/difficulty filters to editedFigures as we do for filteredFigures
+  const filteredEditedFigures = editedFigures
+    .filter((figure) => {
+      const matchesSearch =
+        figure.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        figure.note.toLowerCase().includes(searchTerm.toLowerCase())
+      const matchesDifficulty =
+        difficultyFilter === "" ||
+        figure.difficulty === Number(difficultyFilter)
+      return matchesSearch && matchesDifficulty
+    })
+
 
   // Validate edited figures and sync with Supabase (delete, update, insert)
   async function saveChanges() {
@@ -432,7 +444,7 @@ export default function FiguresPage() {
       </div>
 
       <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">
-        Showing {filteredFigures.length} of {figures.length} figures
+        Showing {editMode ? filteredEditedFigures.length : filteredFigures.length} of {editMode ? editedFigures.length : figures.length} figures
       </p>
 
       {!editMode && (
@@ -570,7 +582,7 @@ export default function FiguresPage() {
         <tbody ref={tableBodyRef}>
 
           {editMode
-            ? editedFigures.map((figure, index) => {
+            ? filteredEditedFigures.map((figure, index) => {
 
               let videoId: string | null = null
 
@@ -586,7 +598,7 @@ export default function FiguresPage() {
                 <React.Fragment key={figure.id}>
                   <tr className="border-b text-sm">
                     <td className="p-1 text-center text-xs w-8 text-gray-600 dark:text-gray-400 font-semibold">
-                      {editedFigures.length - index}
+                      {filteredEditedFigures.length - index}
                     </td>
                     <td className="p-1">
                       <textarea
