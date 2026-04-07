@@ -300,25 +300,7 @@ export default function FiguresPage() {
         }
       }
 
-      // Reload figures from database to confirm all changes persisted
-      const { data } = await supabase
-        .from("figures")
-        .select("*")
-        .eq("dance_style", dance)
-
-      if (data) {
-        const cleanedData = data.map(fig => ({
-          ...fig,
-          youtube_url: cleanYouTubeUrl(fig.youtube_url)
-        }))
-        setFigures(cleanedData)
-      }
-      
-      // Collapse all videos when exiting edit mode
-      setOpenVideosInEditMode(new Set())
-      setEditingFigureId(null)
-      setRawTimeInputs({})
-      setEditMode(false)
+      // All operations completed successfully
       alert("Changes saved successfully!")
 
     } catch (error) {
@@ -326,6 +308,26 @@ export default function FiguresPage() {
       alert("Error saving changes: " + (error as Error).message)
     }
 
+    // Always reload figures from database after save attempt (success or failure)
+    // This ensures we're always in sync with the database
+    const { data } = await supabase
+      .from("figures")
+      .select("*")
+      .eq("dance_style", dance)
+
+    if (data) {
+      const cleanedData = data.map(fig => ({
+        ...fig,
+        youtube_url: cleanYouTubeUrl(fig.youtube_url)
+      }))
+      setFigures(cleanedData)
+    }
+
+    // Collapse all videos when exiting edit mode
+    setOpenVideosInEditMode(new Set())
+    setEditingFigureId(null)
+    setRawTimeInputs({})
+    setEditMode(false)
   }
 
   function toggleVideo(id: string) {
