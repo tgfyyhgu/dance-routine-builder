@@ -396,8 +396,8 @@ export default function FiguresPage() {
   return (
     <main className="bg-gray-50 dark:bg-gray-950">
 
-      <div className="p-10">
-      <div className="flex gap-4 mb-8 items-center flex-wrap">
+      <div className="p-6">
+      <div className="flex gap-4 mb-3 items-center flex-wrap">
         <input
           type="text"
           placeholder="Search figures by name or notes..."
@@ -431,7 +431,7 @@ export default function FiguresPage() {
         )}
       </div>
 
-      <p className="text-xs text-gray-600 dark:text-gray-400 mb-6">
+      <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">
         Showing {filteredFigures.length} of {figures.length} figures
       </p>
 
