@@ -337,6 +337,21 @@ export default function FiguresPage() {
     } catch (error) {
       console.error("Save error:", error)
       alert("Error saving changes: " + (error as Error).message)
+      return  // Don't reload if there was an error
+    }
+
+    // Reload figures from database to sync with latest changes
+    const { data } = await supabase
+      .from("figures")
+      .select("*")
+      .eq("dance_style", dance)
+
+    if (data) {
+      const cleanedData = data.map(fig => ({
+        ...fig,
+        youtube_url: cleanYouTubeUrl(fig.youtube_url)
+      }))
+      setFigures(cleanedData)
     }
 
     // Exit edit mode
