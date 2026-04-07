@@ -348,22 +348,22 @@ export default function FiguresPage() {
       clearTimeout(debounceTimersRef.current[figureId])
     }
 
-    // Set new timer to parse and apply the times after 800ms of no input
+    // Set new timer to parse and apply the times after 1s of no input
     debounceTimersRef.current[figureId] = setTimeout(() => {
       const rawInput = rawTimeInputs[figureId]
       if (!rawInput) return
 
-      // Parse times
+      // Parse times (suppress error alerts during preview)
       let newStartTime = undefined
       let newEndTime = undefined
 
       if (rawInput.start.trim()) {
-        const parsed = parseTimeInputToSeconds(rawInput.start)
+        const parsed = parseTimeInputToSeconds(rawInput.start, true)
         if (parsed !== null) newStartTime = parsed
       }
 
       if (rawInput.end.trim()) {
-        const parsed = parseTimeInputToSeconds(rawInput.end)
+        const parsed = parseTimeInputToSeconds(rawInput.end, true)
         if (parsed !== null) newEndTime = parsed
       }
 
@@ -381,20 +381,26 @@ export default function FiguresPage() {
 
       // Clean up timer reference
       delete debounceTimersRef.current[figureId]
-    }, 800)
+    }, 1000)
   }
 
   // Parse time string to seconds using strict rules
-  function parseTimeInputToSeconds(input: string): number | null {
+  // suppressErrors: if true, don't show alert messages (used during preview)
+  function parseTimeInputToSeconds(input: string, suppressErrors: boolean = false): number | null {
     // Strip all non-numeric characters
-    const stripped = input.replace(/[^0-9]/g, '')
+    let stripped = input.replace(/[^0-9]/g, '')
     
     // Check if empty after stripping
     if (!stripped) return 0
     
+    // Remove leading zeros before padding (so 000045 becomes 45, then pads to 000045)
+    stripped = stripped.replace(/^0+/, '') || '0'
+    
     // Check if larger than 6 digits
     if (stripped.length > 6) {
-      alert(`Time input is too long (${stripped.length} digits). Maximum 6 digits allowed (HHMMSS format).`)
+      if (!suppressErrors) {
+        alert(`Time input is too long (${stripped.length} digits). Maximum 6 digits allowed (HHMMSS format).`)
+      }
       return null
     }
     
@@ -408,11 +414,15 @@ export default function FiguresPage() {
     
     // Validate MM and SS are in range [0, 60)
     if (mm >= 60) {
-      alert(`Minutes value (${mm}) is invalid. Must be between 0 and 59.`)
+      if (!suppressErrors) {
+        alert(`Minutes value (${mm}) is invalid. Must be between 0 and 59.`)
+      }
       return null
     }
     if (ss >= 60) {
-      alert(`Seconds value (${ss}) is invalid. Must be between 0 and 59.`)
+      if (!suppressErrors) {
+        alert(`Seconds value (${ss}) is invalid. Must be between 0 and 59.`)
+      }
       return null
     }
     
@@ -711,7 +721,7 @@ export default function FiguresPage() {
                         type="text"
                         className="border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white p-0.5 w-16 text-xs"
                         placeholder="hhmmss"
-                        value={rawTimeInputs[figure.id]?.start ?? formatSecondsToTime(figure.start_time)}
+                        value={rawTimeInputs[figure.id]?.start ?? (figure.start_time === 0 ? "" : formatSecondsToTime(figure.start_time))}
                         onFocus={(e) => {
                           setEditingFigureId(figure.id)
                           if (figure.youtube_url) {
@@ -719,13 +729,14 @@ export default function FiguresPage() {
                           } else {
                             setOpenVideosInEditMode(new Set())
                           }
-                          if (!rawTimeInputs[figure.id]?.start && figure.start_time === 0) {
+                          // Clear field only if user hasn't typed anything yet
+                          if (!rawTimeInputs[figure.id]?.start) {
                             e.target.value = ""
                           }
                         }}
                         onBlur={(e) => {
                           if (e.target.value === "") {
-                            e.target.value = formatSecondsToTime(figure.start_time)
+                            e.target.value = figure.start_time === 0 ? "" : formatSecondsToTime(figure.start_time)
                           }
                         }}
                         onChange={(e) => {
@@ -748,7 +759,7 @@ export default function FiguresPage() {
                         type="text"
                         className="border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white p-0.5 w-16 text-xs"
                         placeholder="hhmmss"
-                        value={rawTimeInputs[figure.id]?.end ?? formatSecondsToTime(figure.end_time)}
+                        value={rawTimeInputs[figure.id]?.end ?? (figure.end_time === 0 ? "" : formatSecondsToTime(figure.end_time))}
                         onFocus={(e) => {
                           setEditingFigureId(figure.id)
                           if (figure.youtube_url) {
@@ -756,13 +767,14 @@ export default function FiguresPage() {
                           } else {
                             setOpenVideosInEditMode(new Set())
                           }
-                          if (!rawTimeInputs[figure.id]?.end && figure.end_time === 0) {
+                          // Clear field only if user hasn't typed anything yet
+                          if (!rawTimeInputs[figure.id]?.end) {
                             e.target.value = ""
                           }
                         }}
                         onBlur={(e) => {
                           if (e.target.value === "") {
-                            e.target.value = formatSecondsToTime(figure.end_time)
+                            e.target.value = figure.end_time === 0 ? "" : formatSecondsToTime(figure.end_time)
                           }
                         }}
                         onChange={(e) => {
