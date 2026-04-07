@@ -52,93 +52,6 @@ function cleanYouTubeUrl(url: string): string {
   return url
 }
 
-// Video player component for edit mode that properly handles end_time
-function EditModeVideoPlayer({ videoId, startTime, endTime, playerId }: 
-  { videoId: string; startTime: number; endTime: number; playerId: string }) {
-  const playerRef = useRef<HTMLDivElement>(null)
-  const playerInstanceRef = useRef<YTPlayer | null>(null)
-  const checkIntervalRef = useRef<NodeJS.Timeout | null>(null)
-
-  // Helper functions must be defined before useEffect to avoid hoisting issues
-  function startEndTimeChecker() {
-    stopEndTimeChecker() // Clear any existing interval
-    
-    if (!endTime || endTime <= startTime) return
-
-    checkIntervalRef.current = setInterval(() => {
-      const currentTime = playerInstanceRef.current?.getCurrentTime() || 0
-      if (currentTime >= endTime) {
-        playerInstanceRef.current?.pauseVideo()
-        stopEndTimeChecker()
-      }
-    }, 100) as any
-  }
-
-  function stopEndTimeChecker() {
-    if (checkIntervalRef.current) {
-      clearInterval(checkIntervalRef.current as any)
-      checkIntervalRef.current = null
-    }
-  }
-
-  // Initialize player once
-  useEffect(() => {
-    if (!videoId || !globalThis.window?.YT || !playerRef.current) return
-
-    // Clean up old player
-    if (playerInstanceRef.current?.destroy) {
-      playerInstanceRef.current.destroy()
-    }
-
-    try {
-      playerInstanceRef.current = new globalThis.window.YT.Player(playerId, {
-        videoId: videoId,
-        width: '420',
-        height: '240',
-        playerVars: {
-          controls: 1,
-          autoplay: 0,
-        },
-        events: {
-          onReady: () => {
-            playerInstanceRef.current?.seekTo(startTime)
-          },
-          onStateChange: (event: { data: number }) => {
-            // 1 = playing, 2 = paused
-            // Start checking end time when user presses play
-            if (event.data === 1) {
-              startEndTimeChecker()
-            } else {
-              stopEndTimeChecker()
-            }
-          },
-        },
-      })
-    } catch (e) {
-      console.error('EditModeVideoPlayer initialization error:', e)
-    }
-
-    return () => {
-      stopEndTimeChecker()
-      if (playerInstanceRef.current?.destroy) {
-        playerInstanceRef.current.destroy()
-      }
-    }
-  }, [videoId, playerId])
-
-  // Separate effect to handle end time checking - updates when startTime or endTime change
-  useEffect(() => {
-    // If player is currently playing, restart the end time checker with new endTime
-    const currentState = playerInstanceRef.current?.getPlayerState()
-    if (currentState === 1) { // 1 = playing
-      stopEndTimeChecker()
-      startEndTimeChecker()
-    }
-  }, [startTime, endTime])
-
-  return <div id={playerId} ref={playerRef} style={{ width: '100%', height: '100%' }} />
-}
-
 export default function FiguresPage() {
   const params = useParams()
   const dance = params.dance as string
@@ -915,13 +828,12 @@ export default function FiguresPage() {
 
                       <td colSpan={8} className="p-1">
 
-                        <div key={`${figure.id}-player`} style={{ width: '420px', height: '240px', position: 'relative' }} id={`player-${figure.id}`} />
-
-                        <EditModeVideoPlayer 
-                          videoId={videoId}
-                          startTime={figure.start_time || 0}
-                          endTime={figure.end_time || 0}
-                          playerId={`player-${figure.id}`}
+                        <iframe
+                          width="560"
+                          height="315"
+                          title={`${figure.id} - YouTube video`}
+                          src={`https://www.youtube.com/embed/${videoId}?start=${figure.start_time || 0}&end=${figure.end_time || ""}`}
+                          allowFullScreen
                         />
 
                       </td>
