@@ -7,6 +7,7 @@ import FigureCard from "@/components/FigureCard"
 import Link from "next/link"
 import { parseTimeToSeconds, formatSecondsToTime } from "@/lib/timeUtils"
 import { useAuth } from "@/lib/AuthContext"
+import { YTPlayer } from "@/types/routine"
 
 interface Figure {
   id: string
@@ -49,6 +50,77 @@ function cleanYouTubeUrl(url: string): string {
     return `https://www.youtube.com/watch?v=${videoId}`
   }
   return url
+}
+
+// Video player component for edit mode that properly handles end_time
+function EditModeVideoPlayer({ videoId, startTime, endTime, playerId }: 
+  { videoId: string; startTime: number; endTime: number; playerId: string }) {
+  const playerRef = useRef<HTMLDivElement>(null)
+  const playerInstanceRef = useRef<YTPlayer | null>(null)
+  const endTimeTimerRef = useRef<NodeJS.Timeout | null>(null)
+
+  useEffect(() => {
+    if (!videoId || !globalThis.window?.YT || !playerRef.current) return
+
+    // Clean up old player
+    if (playerInstanceRef.current?.destroy) {
+      playerInstanceRef.current.destroy()
+    }
+    if (endTimeTimerRef.current) {
+      clearTimeout(endTimeTimerRef.current)
+    }
+
+    try {
+      playerInstanceRef.current = new globalThis.window.YT.Player(playerId, {
+        videoId: videoId,
+        width: '420',
+        height: '240',
+        playerVars: {
+          controls: 1,
+          autoplay: 0,
+        },
+        events: {
+          onReady: () => {
+            playerInstanceRef.current?.seekTo(startTime)
+          },
+          onStateChange: (event: { data: number }) => {
+            // 1 = playing
+            if (event.data === 1) {
+              // Video is playing - set up end time check
+              setupEndTimeTimer()
+            }
+          },
+        },
+      })
+    } catch (e) {
+      console.error('EditModeVideoPlayer initialization error:', e)
+    }
+
+    function setupEndTimeTimer() {
+      if (endTimeTimerRef.current) clearTimeout(endTimeTimerRef.current)
+      if (!endTime || endTime <= startTime) return
+
+      const checkInterval = setInterval(() => {
+        const currentTime = playerInstanceRef.current?.getCurrentTime() || 0
+        if (currentTime >= endTime) {
+          playerInstanceRef.current?.pauseVideo()
+          if (endTimeTimerRef.current) clearTimeout(endTimeTimerRef.current)
+          clearInterval(checkInterval)
+        }
+      }, 100)
+
+      endTimeTimerRef.current = checkInterval as any
+    }
+
+    return () => {
+      if (endTimeTimerRef.current) clearTimeout(endTimeTimerRef.current)
+      if (playerInstanceRef.current?.destroy) {
+        playerInstanceRef.current.destroy()
+      }
+    }
+  }, [videoId, startTime, endTime, playerId])
+
+  return <div id={playerId} ref={playerRef} style={{ width: '100%', height: '100%' }} />
 }
 
 export default function FiguresPage() {
@@ -827,12 +899,13 @@ export default function FiguresPage() {
 
                       <td colSpan={8} className="p-1">
 
-                        <iframe
-                          width="420"
-                          height="240"
-                          title={`${figure.name || "Figure"} - YouTube video`}
-                          src={`https://www.youtube.com/embed/${videoId}?start=${figure.start_time || 0}&end=${figure.end_time || ""}`}
-                          allowFullScreen
+                        <div key={`${figure.id}-player`} style={{ width: '420px', height: '240px', position: 'relative' }} id={`player-${figure.id}`} />
+
+                        <EditModeVideoPlayer 
+                          videoId={videoId}
+                          startTime={figure.start_time || 0}
+                          endTime={figure.end_time || 0}
+                          playerId={`player-${figure.id}`}
                         />
 
                       </td>
