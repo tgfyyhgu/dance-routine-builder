@@ -20,6 +20,7 @@ type Props = {
   readonly visibility?: 'private' | 'public'
   readonly created_by?: string
   readonly currentUserId?: string
+  readonly number?: number  // Display number (top = largest, bottom = 1)
 }
 export default function FigureCard({
   figureId,
@@ -34,6 +35,7 @@ export default function FigureCard({
   visibility,
   created_by,
   currentUserId,
+  number,
 }: Props) {
   const videoVisible = isOpen
 
@@ -54,6 +56,11 @@ export default function FigureCard({
       className="border-b dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
       onClick={() => toggleVideo(figureId)}
     >
+      {number !== undefined && (
+        <td className="p-2 text-center font-semibold text-xs w-8 text-gray-600 dark:text-gray-400">
+          {number}
+        </td>
+      )}
       <td className="p-2 font-semibold text-sm">
         <div className="flex items-center gap-2">
           <span>{name}</span>

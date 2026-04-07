@@ -553,6 +553,7 @@ export default function FiguresPage() {
       <table className="w-full border-collapse text-sm">
         <thead>
           <tr className="border-b dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+            <th className="text-left p-1 text-gray-900 dark:text-white text-xs font-semibold w-8 text-center">#</th>
             <th className="text-left p-1 text-gray-900 dark:text-white text-xs font-semibold">Name</th>
             <th className="text-left p-1 text-gray-900 dark:text-white text-xs font-semibold">Difficulty</th>
             <th className="text-left p-1 text-gray-900 dark:text-white text-xs font-semibold">Notes</th>
@@ -584,6 +585,9 @@ export default function FiguresPage() {
 
                 <React.Fragment key={figure.id}>
                   <tr className="border-b text-sm">
+                    <td className="p-1 text-center text-xs w-8 text-gray-600 dark:text-gray-400 font-semibold">
+                      {editedFigures.length - index}
+                    </td>
                     <td className="p-1">
                       <textarea
                         rows={1}
@@ -823,7 +827,7 @@ export default function FiguresPage() {
               )
 
             })
-            : filteredFigures.map((figure) => (
+            : filteredFigures.map((figure, index) => (
               <FigureCard
                 key={figure.id}
                 name={figure.name}
@@ -838,6 +842,7 @@ export default function FiguresPage() {
                 visibility={figure.visibility}
                 created_by={figure.created_by}
                 currentUserId={user?.id}
+                number={filteredFigures.length - index}
               />
             ))
           }
