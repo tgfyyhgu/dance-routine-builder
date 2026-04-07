@@ -21,6 +21,7 @@ interface Figure {
   visibility?: 'private' | 'public'
   created_by?: string
   created_at?: string
+  isNew?: boolean  // Track if this figure was created in current edit session
 }
 
 // Helper function to clean YouTube URLs by removing playlist parameters
@@ -196,8 +197,13 @@ export default function FiguresPage() {
       }
     }
 
-    const originalIds = figures.map(f => f.id)
-    const allDeleteIds = new Set([...emptyFigures, ...originalIds.filter(id => !completeFigures.map(f => f.id).includes(id))])
+    // Mark figures for deletion: empty ones + any existing figures not in completeFigures
+    const completeFigureIds = new Set(completeFigures.map(f => f.id))
+    const figuresInOriginalEditMode = editedFigures.filter(f => !f.isNew).map(f => f.id)
+    const allDeleteIds = new Set([
+      ...emptyFigures,
+      ...figuresInOriginalEditMode.filter(id => !completeFigureIds.has(id))
+    ])
     const deletedIds = Array.from(allDeleteIds)
 
     // Validate: Check for duplicate IDs in completeFigures to prevent primary key conflicts
@@ -243,12 +249,8 @@ export default function FiguresPage() {
       for (const fig of completeFigures) {
         const cleanUrl = cleanYouTubeUrl(fig.youtube_url)
         
-        if (originalIds.includes(fig.id)) {
-          // Mark for update
-          const figWithCleanUrl = { ...fig, youtube_url: cleanUrl }
-          figuresToUpdate.push(figWithCleanUrl)
-        } else {
-          // Prepare for batch insert
+        if (fig.isNew) {
+          // New figure created in this edit session: INSERT
           figuresToInsert.push({
             id: fig.id,
             name: fig.name,
@@ -261,6 +263,10 @@ export default function FiguresPage() {
             created_by: user?.id,
             visibility: 'private'
           })
+        } else {
+          // Existing figure: UPDATE
+          const figWithCleanUrl = { ...fig, youtube_url: cleanUrl }
+          figuresToUpdate.push(figWithCleanUrl)
         }
       }
 
@@ -308,8 +314,7 @@ export default function FiguresPage() {
       alert("Error saving changes: " + (error as Error).message)
     }
 
-    // Always reload figures from database after save attempt (success or failure)
-    // This ensures we're always in sync with the database
+    // Reload figures from database to reflect saved changes
     const { data } = await supabase
       .from("figures")
       .select("*")
@@ -323,7 +328,7 @@ export default function FiguresPage() {
       setFigures(cleanedData)
     }
 
-    // Collapse all videos when exiting edit mode
+    // Exit edit mode
     setOpenVideosInEditMode(new Set())
     setEditingFigureId(null)
     setRawTimeInputs({})
@@ -513,7 +518,8 @@ export default function FiguresPage() {
                   start_time: 0,
                   end_time: 0,
                   dance_style: dance,
-                  visibility: 'private'
+                  visibility: 'private',
+                  isNew: true  // Mark as new figure
                 }, ...editedFigures])
                 // Collapse all videos when adding new figure
                 setOpenVideosInEditMode(new Set())
