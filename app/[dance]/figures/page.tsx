@@ -185,6 +185,17 @@ export default function FiguresPage() {
     const allDeleteIds = new Set([...emptyFigures, ...originalIds.filter(id => !completeFigures.map(f => f.id).includes(id))])
     const deletedIds = Array.from(allDeleteIds)
 
+    // Validate: Check for duplicate IDs in completeFigures to prevent primary key conflicts
+    const figureIds = new Set<string>()
+    for (const fig of completeFigures) {
+      if (figureIds.has(fig.id)) {
+        console.error("Duplicate figure ID detected:", fig.id)
+        alert(`Internal error: Duplicate figure ID detected (${fig.id}). This should not happen. Please refresh and try again.`)
+        return
+      }
+      figureIds.add(fig.id)
+    }
+
     try {
       // DELETE
       for (const id of deletedIds) {
@@ -199,59 +210,79 @@ export default function FiguresPage() {
         }
       }
 
-      // UPDATE and INSERT
+      // Separate figures into updates and inserts, clean URLs for all
+      const figuresToUpdate: Figure[] = []
+      const figuresToInsert: Array<{
+        id: string
+        name: string
+        difficulty: number
+        note: string
+        youtube_url: string
+        start_time: number
+        end_time: number
+        dance_style: string
+        created_by: string | undefined
+        visibility: string
+      }> = []
+
       for (const fig of completeFigures) {
-        // Clean YouTube URL before saving (removes playlist parameters that prevent embedding)
         const cleanUrl = cleanYouTubeUrl(fig.youtube_url)
-
+        
         if (originalIds.includes(fig.id)) {
-
-          // UPDATE
-          const { error } = await supabase
-            .from("figures")
-            .update({
-              name: fig.name,
-              difficulty: fig.difficulty,
-              note: fig.note,
-              youtube_url: cleanUrl,
-              start_time: fig.start_time,
-              end_time: fig.end_time,
-              visibility: fig.visibility || 'private'
-            })
-            .eq("id", fig.id)
-          
-          if (error) {
-            console.error("Update error:", error)
-            alert("Error updating figure: " + error.message)
-            return
-          }
-
+          // Mark for update
+          const figWithCleanUrl = { ...fig, youtube_url: cleanUrl }
+          figuresToUpdate.push(figWithCleanUrl)
         } else {
-
-          // INSERT
-          const { error } = await supabase
-            .from("figures")
-            .insert({
-              id: fig.id,
-              name: fig.name,
-              difficulty: fig.difficulty,
-              note: fig.note,
-              youtube_url: cleanUrl,
-              start_time: fig.start_time,
-              end_time: fig.end_time,
-              dance_style: dance,
-              created_by: user?.id,
-              visibility: 'private'
-            })
-          
-          if (error) {
-            console.error("Insert error:", error)
-            alert("Error adding figure: " + error.message)
-            return
-          }
-
+          // Prepare for batch insert
+          figuresToInsert.push({
+            id: fig.id,
+            name: fig.name,
+            difficulty: fig.difficulty,
+            note: fig.note,
+            youtube_url: cleanUrl,
+            start_time: fig.start_time,
+            end_time: fig.end_time,
+            dance_style: dance,
+            created_by: user?.id,
+            visibility: 'private'
+          })
         }
+      }
 
+      // BATCH INSERT all new figures at once (more efficient and avoids race conditions)
+      if (figuresToInsert.length > 0) {
+        const { error } = await supabase
+          .from("figures")
+          .insert(figuresToInsert)
+        
+        if (error) {
+          console.error("Batch insert error:", error)
+          console.error("Figures being inserted:", figuresToInsert)
+          alert(`Error adding figures: ${error.message}`)
+          return
+        }
+      }
+
+      // UPDATE each modified figure
+      for (const fig of figuresToUpdate) {
+        const { error } = await supabase
+          .from("figures")
+          .update({
+            name: fig.name,
+            difficulty: fig.difficulty,
+            note: fig.note,
+            youtube_url: fig.youtube_url,
+            start_time: fig.start_time,
+            end_time: fig.end_time,
+            visibility: fig.visibility || 'private'
+          })
+          .eq("id", fig.id)
+        
+        if (error) {
+          console.error("Update error:", error)
+          alert(`Error updating figure "${fig.name}": ${error.message}`)
+          return
+        }
       }
 
       // Reload figures from database to confirm all changes persisted
