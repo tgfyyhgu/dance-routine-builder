@@ -22,6 +22,7 @@ interface Figure {
   created_by?: string
   created_at?: string
   isNew?: boolean  // Track if this figure was created in current edit session
+  deleted?: boolean  // Track if this figure is marked for deletion
 }
 
 // Helper function to clean YouTube URLs by removing playlist parameters
@@ -112,13 +113,15 @@ export default function FiguresPage() {
   const tableBodyRef = useRef<HTMLTableSectionElement>(null)
 
   // Apply same search/difficulty filters to editedFigures as we do for filteredFigures
+  // Also filter out figures marked for deletion
   const filteredEditedFigures = editedFigures
+    .filter(figure => !figure.deleted)  // Hide deleted figures
     .filter((figure) => {
       const matchesSearch =
         figure.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         figure.note.toLowerCase().includes(searchTerm.toLowerCase())
       const matchesDifficulty =
-        difficultyFilter === "" ||
+        difficultyFilter === ""||
         figure.difficulty === Number(difficultyFilter)
       return matchesSearch && matchesDifficulty
     })
@@ -130,8 +133,18 @@ export default function FiguresPage() {
     const emptyFigures: string[] = []
     const incompleteFigures: Figure[] = []
     const completeFigures: Figure[] = []
+    const deletedFigures: string[] = []  // Track figures marked for deletion
 
     for (const fig of editedFigures) {
+      // Figures marked as deleted
+      if (fig.deleted) {
+        // Only delete from DB if they're not new (new ones never got saved)
+        if (!fig.isNew) {
+          deletedFigures.push(fig.id)
+        }
+        continue
+      }
+
       const isCompletelyEmpty = 
         !fig.name?.trim() &&
         !fig.youtube_url?.trim() &&
@@ -209,12 +222,11 @@ export default function FiguresPage() {
       }
     }
 
-    // Mark figures for deletion: empty ones + any existing figures not in completeFigures
+    // Mark figures for deletion: empty ones + figures marked with deleted flag
     const completeFigureIds = new Set(completeFigures.map(f => f.id))
-    const figuresInOriginalEditMode = editedFigures.filter(f => !f.isNew).map(f => f.id)
     const allDeleteIds = new Set([
       ...emptyFigures,
-      ...figuresInOriginalEditMode.filter(id => !completeFigureIds.has(id))
+      ...deletedFigures  // Include explicit deletions
     ])
     const deletedIds = Array.from(allDeleteIds)
 
@@ -324,20 +336,6 @@ export default function FiguresPage() {
     } catch (error) {
       console.error("Save error:", error)
       alert("Error saving changes: " + (error as Error).message)
-    }
-
-    // Reload figures from database to reflect saved changes
-    const { data } = await supabase
-      .from("figures")
-      .select("*")
-      .eq("dance_style", dance)
-
-    if (data) {
-      const cleanedData = data.map(fig => ({
-        ...fig,
-        youtube_url: cleanYouTubeUrl(fig.youtube_url)
-      }))
-      setFigures(cleanedData)
     }
 
     // Exit edit mode
@@ -802,8 +800,10 @@ export default function FiguresPage() {
                       <button
                         className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 font-medium text-sm hover:opacity-70 transition-opacity"
                         onClick={() => {
-                          const updated = editedFigures.filter((_, i) => i !== index)
-                          setEditedFigures(updated)
+                          // Mark figure as deleted instead of removing from state
+                          setEditedFigures(prev => prev.map(fig =>
+                            fig.id === figure.id ? { ...fig, deleted: true } : fig
+                          ))
                         }}
                         title="Delete figure"
                       >
