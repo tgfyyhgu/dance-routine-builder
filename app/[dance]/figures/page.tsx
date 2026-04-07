@@ -57,17 +57,37 @@ function EditModeVideoPlayer({ videoId, startTime, endTime, playerId }:
   { videoId: string; startTime: number; endTime: number; playerId: string }) {
   const playerRef = useRef<HTMLDivElement>(null)
   const playerInstanceRef = useRef<YTPlayer | null>(null)
-  const endTimeTimerRef = useRef<NodeJS.Timeout | null>(null)
+  const checkIntervalRef = useRef<NodeJS.Timeout | null>(null)
 
+  // Helper functions must be defined before useEffect to avoid hoisting issues
+  function startEndTimeChecker() {
+    stopEndTimeChecker() // Clear any existing interval
+    
+    if (!endTime || endTime <= startTime) return
+
+    checkIntervalRef.current = setInterval(() => {
+      const currentTime = playerInstanceRef.current?.getCurrentTime() || 0
+      if (currentTime >= endTime) {
+        playerInstanceRef.current?.pauseVideo()
+        stopEndTimeChecker()
+      }
+    }, 100) as any
+  }
+
+  function stopEndTimeChecker() {
+    if (checkIntervalRef.current) {
+      clearInterval(checkIntervalRef.current as any)
+      checkIntervalRef.current = null
+    }
+  }
+
+  // Initialize player once
   useEffect(() => {
     if (!videoId || !globalThis.window?.YT || !playerRef.current) return
 
     // Clean up old player
     if (playerInstanceRef.current?.destroy) {
       playerInstanceRef.current.destroy()
-    }
-    if (endTimeTimerRef.current) {
-      clearTimeout(endTimeTimerRef.current)
     }
 
     try {
@@ -84,10 +104,12 @@ function EditModeVideoPlayer({ videoId, startTime, endTime, playerId }:
             playerInstanceRef.current?.seekTo(startTime)
           },
           onStateChange: (event: { data: number }) => {
-            // 1 = playing
+            // 1 = playing, 2 = paused
+            // Start checking end time when user presses play
             if (event.data === 1) {
-              // Video is playing - set up end time check
-              setupEndTimeTimer()
+              startEndTimeChecker()
+            } else {
+              stopEndTimeChecker()
             }
           },
         },
@@ -96,29 +118,23 @@ function EditModeVideoPlayer({ videoId, startTime, endTime, playerId }:
       console.error('EditModeVideoPlayer initialization error:', e)
     }
 
-    function setupEndTimeTimer() {
-      if (endTimeTimerRef.current) clearTimeout(endTimeTimerRef.current)
-      if (!endTime || endTime <= startTime) return
-
-      const checkInterval = setInterval(() => {
-        const currentTime = playerInstanceRef.current?.getCurrentTime() || 0
-        if (currentTime >= endTime) {
-          playerInstanceRef.current?.pauseVideo()
-          if (endTimeTimerRef.current) clearTimeout(endTimeTimerRef.current)
-          clearInterval(checkInterval)
-        }
-      }, 100)
-
-      endTimeTimerRef.current = checkInterval as any
-    }
-
     return () => {
-      if (endTimeTimerRef.current) clearTimeout(endTimeTimerRef.current)
+      stopEndTimeChecker()
       if (playerInstanceRef.current?.destroy) {
         playerInstanceRef.current.destroy()
       }
     }
-  }, [videoId, startTime, endTime, playerId])
+  }, [videoId, playerId])
+
+  // Separate effect to handle end time checking - updates when startTime or endTime change
+  useEffect(() => {
+    // If player is currently playing, restart the end time checker with new endTime
+    const currentState = playerInstanceRef.current?.getPlayerState()
+    if (currentState === 1) { // 1 = playing
+      stopEndTimeChecker()
+      startEndTimeChecker()
+    }
+  }, [startTime, endTime])
 
   return <div id={playerId} ref={playerRef} style={{ width: '100%', height: '100%' }} />
 }
