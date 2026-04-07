@@ -829,6 +829,7 @@ export default function FiguresPage() {
                       <td colSpan={8} className="p-1">
 
                         <iframe
+                          key={`video-${figure.id}-${figure.start_time}-${figure.end_time}`}
                           width="560"
                           height="315"
                           title={`${figure.id} - YouTube video`}
