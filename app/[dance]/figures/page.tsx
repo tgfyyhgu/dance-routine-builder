@@ -739,7 +739,7 @@ export default function FiguresPage() {
                             ...rawTimeInputs,
                             [figure.id]: {
                               start: newStart,
-                              end: rawTimeInputs[figure.id]?.end ?? ""
+                              end: rawTimeInputs[figure.id]?.end ?? (figure.end_time === 0 ? "" : formatSecondsToTime(figure.end_time))
                             }
                           })
                           // Parse and update immediately for live preview
@@ -782,7 +782,7 @@ export default function FiguresPage() {
                           setRawTimeInputs({
                             ...rawTimeInputs,
                             [figure.id]: {
-                              start: rawTimeInputs[figure.id]?.start ?? "",
+                              start: rawTimeInputs[figure.id]?.start ?? (figure.start_time === 0 ? "" : formatSecondsToTime(figure.start_time)),
                               end: newEnd
                             }
                           })
