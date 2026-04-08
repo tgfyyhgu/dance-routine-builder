@@ -172,14 +172,37 @@ export default function ChoreoPage() {
   useEffect(() => {
     function handleBeforeUnload(e: BeforeUnloadEvent) {
       if (hasUnsavedChanges) {
+        // Auto-save routine before leaving
+        if (routine.length > 0 && routineName.trim()) {
+          saveRoutine()
+        }
         e.preventDefault()
       }
     }
     globalThis.addEventListener("beforeunload", handleBeforeUnload)
     return () => globalThis.removeEventListener("beforeunload", handleBeforeUnload)
-  }, [hasUnsavedChanges])
+  }, [hasUnsavedChanges, routine, routineName])
 
-  // Keyboard shortcuts: Ctrl+Z (undo), Ctrl+Shift+Z (redo)
+  // Save current routine ID to localStorage when it changes
+  useEffect(() => {
+    if (routineId) {
+      localStorage.setItem(`lastRoutineId_${dance}`, routineId)
+    }
+  }, [routineId, dance])
+
+  // Auto-load last routine for this dance style if no routineId in URL
+  useEffect(() => {
+    if (routineIdFromUrl) return  // Already loading from URL
+    
+    const lastRoutineId = localStorage.getItem(`lastRoutineId_${dance}`)
+    if (lastRoutineId) {
+      // Navigate to choreo with the last routine ID
+      const url = new URL(window.location.href)
+      url.searchParams.set('routineId', lastRoutineId)
+      window.history.replaceState({}, '', url.toString())
+      window.location.reload()
+    }
+  }, [dance, routineIdFromUrl])
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
       // Check if Ctrl (or Cmd on Mac) is pressed
